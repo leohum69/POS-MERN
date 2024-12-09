@@ -1,0 +1,188 @@
+/* General Reset */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+/* Form Container */
+.form-container {
+  max-width: 400px;
+  margin: 50px auto;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+/* Title */
+.form-title {
+  margin-bottom: 20px;
+  font-size: 24px;
+  color: #444;
+}
+
+/* Form Input Fields */
+.form-input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  transition: border-color 0.3s;
+}
+
+.form-input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+/* Button Group */
+.button-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* Buttons */
+.form-button {
+  flex: 1;
+  padding: 10px 15px;
+  font-size: 16px;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+/* Specific Button Styles */
+.login-button {
+  background-color: #007bff;
+}
+
+.login-button:hover {
+  background-color: #0056b3;
+}
+
+.forgot-password-button {
+  background-color: #6c757d;
+}
+
+.forgot-password-button:hover {
+  background-color: #5a6268;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .form-container {
+    padding: 15px;
+  }
+  .form-button {
+    font-size: 14px;
+    padding: 8px;
+  }
+}
+
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #007bff;
+  color: #fff;
+  padding: 10px 20px;
+}
+
+.navbar-title {
+  margin: 0;
+  font-size: 24px;
+}
+
+.navbar-links {
+  list-style: none;
+  display: flex;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar-links li {
+  margin: 0 15px;
+}
+
+.navbar-links a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 18px;
+}
+
+.navbar-links a:hover {
+  text-decoration: underline;
+}
+
+.items-table {
+  padding: 20px;
+  background-color: #f4f4f4;
+}
+
+.items-table-content {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.items-table-content th, .items-table-content td {
+  padding: 10px;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+.items-table-content th {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.items-table-content tr:hover {
+  background-color: #f1f1f1;
+}
+
+.search-box {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+}
+
+.search-results {
+  margin: 20px 0;
+}
+
+.selected-items {
+  margin-top: 20px;
+}
+
+.selected-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.selected-item input {
+  margin-left: 10px;
+  padding: 5px;
+  width: 100px;
+}
+
+.total-price {
+  font-size: 18px;
+  margin-top: 20px;
+}
+
+.customer-info input {
+  margin-right: 10px;
+  padding: 5px;
+}
+
