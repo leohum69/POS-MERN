@@ -1,14 +1,17 @@
-# StudyPortalMERN
+# POS-MERN
 
-StudyPortalMERN is a comprehensive web application designed to facilitate online learning and collaboration. Built using the MERN stack (MongoDB, Express.js, React, and Node.js), this project aims to provide a seamless and interactive learning experience.
+## Project Overview
+
+POS-MERN is a Point of Sale (POS) system built using the MERN stack (MongoDB, Express.js, React, Node.js). This project aims to provide a comprehensive solution for managing sales, inventory, and customer data for retail businesses.
 
 ## Features
 
-- **User Authentication**: Secure login and registration using JWT.
-- **Course Management**: Create, update, and delete courses.
-- **Content Delivery**: Upload and manage course materials.
-- **Interactive Learning**: Discussion forums and real-time chat.
-- **Progress Tracking**: Monitor student progress and performance.
+- User Authentication and Authorization
+- Product Management
+- Inventory Tracking
+- Sales Reporting
+- Customer Management
+- Responsive Design
 
 ## Dependencies
 - **U need to have a mongodb server connection, I was using my local mongoDB server**
@@ -18,11 +21,11 @@ StudyPortalMERN is a comprehensive web application designed to facilitate online
 
 1. Clone the repository:
     ```bash
-    git clone https://github.com/leohum69/StudyPortalMERN
+    git clone https://github.com/leohum69/POS-MERN
     ```
 2. Navigate to the project directory:
     ```bash
-    cd StudyPortalMERN
+    cd POS-MERN
     ```
 3. Install server dependencies:
     ```bash
