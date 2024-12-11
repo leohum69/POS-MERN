@@ -27,21 +27,24 @@ const itemschema = {
 
 const Item = mongoose.model("Item", itemschema,"items");
 
-const orderSchema = {
-  customerName: String,
-  customerPhone: String,
-  type: String,
-  totalPrice: Number,
+
+const orderSchema = new mongoose.Schema({
+  customerName: String, // Optional customer name
+  customerPhone: String, // Optional customer phone
+  orderType: String, // 'retail' or 'wholesale'
   orderDetails: [
     {
-      itemname: String,
-      quantity: Number,
-      price: Number,
-      discount: Number, // Add the discount field
-    }
+      itemname: String, // Name of the item
+      quantity: Number, // Quantity of the item
+      price: Number, // Price per unit
+    },
   ],
-  date: { type: Date, default: Date.now },
-};
+  totalPriceBeforeDiscount: Number, // Total price before applying the discount
+  discountPercentage: Number, // Percentage discount applied
+  discountAmount: Number, // Discount amount in currency
+  totalPriceAfterDiscount: Number, // Final total after applying the discount
+  date: { type: Date, default: Date.now }, // Order creation date
+});
 
 const Order = mongoose.model("Order", orderSchema, "orders");
 
@@ -82,41 +85,76 @@ app.get('/items/search', async (req, res) => {
   }
 });
 
-
-app.post('/place-order', async (req, res) => {
-  const { orderDetails, customerName, customerPhone, totalPrice } = req.body;
-
-  // Validate incoming data
-  if (!orderDetails || orderDetails.length === 0) {
-    return res.status(400).send({ message: "Order details cannot be empty." });
-  }
-
+app.post("/items", async (req, res) => {
   try {
-    // Validate each orderDetail entry
-    const isValid = orderDetails.every(item => 
-      item.quantity > 0 && item.price >= 0 && item.discount >= 0
-    );
+      const { name, price, quantity, model, code } = req.body;
 
-    if (!isValid) {
-      return res.status(400).send({ message: "Invalid order details." });
-    }
+      // Create a new item with only the provided fields
+      const newItem = new Item({
+          name: name || "N/A",         // Default to "N/A" if name is not provided
+          price: price || 0,          // Default to 0 if price is not provided
+          quantity: quantity || 0,    // Default to 0 if quantity is not provided
+          model: model || "N/A",      // Default to "N/A" if model is not provided
+          code: code || "N/A"         // Default to "N/A" if code is not provided
+      });
 
-    const order = new Order({
-      customerName: customerName || "",
-      customerPhone: customerPhone || "",
-      type: customerName ? "wholesale" : "retail",
-      totalPrice,
-      orderDetails,
-    });
+      // Save the item to the database
+      await newItem.save();
 
-    await order.save();
-    res.status(201).send({ message: "Order placed successfully!" });
+      res.status(201).json({ message: "Item added successfully", item: newItem });
   } catch (error) {
-    console.error("Error placing order:", error);
-    res.status(500).send({ message: "Server error while placing the order." });
+      console.error("Error adding item:", error);
+      res.status(500).json({ error: "Internal server error" });
   }
 });
 
+
+
+app.post('/place-order', async (req, res) => {
+  const {
+    customerName,
+    customerPhone,
+    orderType,
+    orderDetails,
+    totalPriceBeforeDiscount,
+    discountPercentage,
+    discountAmount,
+    totalPriceAfterDiscount,
+  } = req.body;
+
+  // Validate orderDetails
+  if (!orderDetails || !Array.isArray(orderDetails) || orderDetails.length === 0) {
+    return res.status(400).json({ message: 'Order details are required and must be a non-empty array.' });
+  }
+
+  // Ensure all order details are valid
+  const isValidDetails = orderDetails.every(
+    (item) => item.itemname && item.quantity > 0 && item.price >= 0
+  );
+
+  if (!isValidDetails) {
+    return res.status(400).json({ message: 'Invalid order details.' });
+  }
+
+  try {
+    const order = new Order({
+      customerName: customerName || '', // Optional for wholesale
+      customerPhone: customerPhone || '', // Optional for wholesale
+      orderType: orderType || 'retail', // Default to 'retail' if not provided
+      orderDetails,
+      totalPriceBeforeDiscount: totalPriceBeforeDiscount || 0,
+      discountPercentage: discountPercentage || 0,
+      discountAmount: discountAmount || 0,
+      totalPriceAfterDiscount: totalPriceAfterDiscount || totalPriceBeforeDiscount || 0,
+    });
+
+    await order.save();
+    res.status(201).json({ message: 'Order placed successfully!' });
+  } catch (error) {
+    console.error('Error placing order:', error);
+    res.status(500).json({ message: 'Server error while placing the order.' });
+  }
+});
 
  
 app.get('/orders', async (req, res) => {
@@ -124,10 +162,11 @@ app.get('/orders', async (req, res) => {
     const orders = await Order.find();
     res.status(200).json(orders);
   } catch (error) {
-    console.error("Error fetching orders:", error);
-    res.status(500).send({ message: "Server error while fetching orders." });
+    console.error('Error fetching orders:', error);
+    res.status(500).json({ message: 'Server error while fetching orders.' });
   }
 });
+
 
 
 app.put('/items/:id', async (req, res) => {

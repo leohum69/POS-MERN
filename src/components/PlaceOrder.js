@@ -10,6 +10,9 @@ const PlaceOrder = () => {
     const [selectedItems, setSelectedItems] = useState([]);
     const [type, setType] = useState('retail');
     const [totalValue, setTotalValue] = useState(0);
+    const [discountPercentage, setDiscountPercentage] = useState(0);
+    const [discountAmount, setDiscountAmount] = useState(0);
+    const [discountedTotal, setDiscountedTotal] = useState(0);
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
     const [message, setMessage] = useState('');
@@ -17,8 +20,12 @@ const PlaceOrder = () => {
     useEffect(() => {
         axios.get('http://localhost:8080/items')
             .then(response => {
-                setItems(response.data);
-                setFilteredItems(response.data);
+                const updatedItems = response.data.map(item => ({
+                    ...item,
+                    price: item.price ?? 0
+                }));
+                setItems(updatedItems);
+                setFilteredItems(updatedItems);
             })
             .catch(error => console.error('Error fetching data:', error));
     }, []);
@@ -29,7 +36,13 @@ const PlaceOrder = () => {
 
         if (search.length > 0) {
             axios.get(`http://localhost:8080/items/search?name=${search}`)
-                .then(response => setFilteredItems(response.data))
+                .then(response => {
+                    const updatedItems = response.data.map(item => ({
+                        ...item,
+                        price: item.price ?? 0
+                    }));
+                    setFilteredItems(updatedItems);
+                })
                 .catch(error => console.error('Error fetching filtered items:', error));
         } else {
             setFilteredItems(items);
@@ -38,12 +51,13 @@ const PlaceOrder = () => {
 
     const handleItemSelection = (item) => {
         if (!selectedItems.some(selected => selected.code === item.code)) {
-            setSelectedItems(prev => [
-                ...prev,
-                { ...item, quantity: 1, price: item.price, discount: 0 }
-            ]);
+            const updatedItems = [
+                ...selectedItems,
+                { ...item, quantity: 1, price: item.price }
+            ];
+            setSelectedItems(updatedItems);
+            calculateTotal(updatedItems);
         }
-        calculateTotal([...selectedItems, { ...item, quantity: 1, price: item.price, discount: 0 }]);
     };
 
     const handleInputChange = (itemCode, field, value) => {
@@ -58,13 +72,7 @@ const PlaceOrder = () => {
     };
 
     const calculateTotal = (items) => {
-        const total = items.reduce((sum, item) => {
-            const itemTotal = Math.max(
-                item.quantity * item.price - item.discount,
-                0
-            ); // Ensure total does not go below 0
-            return sum + itemTotal;
-        }, 0);
+        const total = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
         setTotalValue(total);
     };
 
@@ -79,27 +87,42 @@ const PlaceOrder = () => {
             itemname: item.name,
             quantity: item.quantity,
             price: item.price,
-            discount: item.discount, // Include the discount field
         }));
-    
+
         try {
             const response = await axios.post('http://localhost:8080/place-order', {
                 orderDetails,
                 customerName: type === 'wholesale' ? customerName : '',
                 customerPhone: type === 'wholesale' ? customerPhone : '',
-                totalPrice: totalValue,
+                totalPrice: discountedTotal,
+                discount: discountPercentage,
             });
-    
+
             setMessage(response.data.message || 'Order placed successfully!');
             setSelectedItems([]);
             setCustomerName('');
             setCustomerPhone('');
             setTotalValue(0);
+            setDiscountPercentage(0);
+            setDiscountAmount(0);
+            setDiscountedTotal(0);
         } catch (error) {
             setMessage('Error placing the order.');
         }
     };
-    
+
+    const handleDiscountChange = (e) => {
+        const value = parseFloat(e.target.value) || 0;
+        setDiscountPercentage(value);
+    };
+
+    // Recalculate discount and total whenever totalValue or discountPercentage changes
+    useEffect(() => {
+        const discount = (discountPercentage / 100) * totalValue;
+        const finalTotal = totalValue - discount;
+        setDiscountAmount(discount);
+        setDiscountedTotal(finalTotal);
+    }, [totalValue, discountPercentage]);
 
     return (
         <div className="place-order">
@@ -125,6 +148,7 @@ const PlaceOrder = () => {
                             <th>Price</th>
                             <th>Size</th>
                             <th>Scheme</th>
+                            <th>Model</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -136,6 +160,7 @@ const PlaceOrder = () => {
                                 <td>{item.price}</td>
                                 <td>{item.size}</td>
                                 <td>{item.scheme}</td>
+                                <td>{item.model}</td>
                                 <td>
                                     <button onClick={() => handleItemSelection(item)}>Add to Cart</button>
                                 </td>
@@ -156,7 +181,7 @@ const PlaceOrder = () => {
                                 <th>Name</th>
                                 <th>Quantity</th>
                                 <th>Price</th>
-                                <th>Discount</th>
+                                <th>Total</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -185,16 +210,7 @@ const PlaceOrder = () => {
                                             }
                                         />
                                     </td>
-                                    <td>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={item.discount}
-                                            onChange={(e) =>
-                                                handleInputChange(item.code, 'discount', parseFloat(e.target.value))
-                                            }
-                                        />
-                                    </td>
+                                    <td>{(item.quantity * item.price).toFixed(2)}</td>
                                     <td>
                                         <button onClick={() => handleRemoveItem(item.code)}>Remove</button>
                                     </td>
@@ -208,8 +224,20 @@ const PlaceOrder = () => {
             </div>
 
             {/* Total */}
-            <div className="total-price">
-                <p>Total: Rs.{totalValue.toFixed(2)}</p>
+            <div className="total-price-container">
+                <div className="total-price">
+                    <p>Subtotal: Rs.{totalValue.toFixed(2)}</p>
+                    <input
+                        type="number"
+                        min="0"
+                        placeholder="Discount (%)"
+                        value={discountPercentage}
+                        onChange={handleDiscountChange}
+                        className="discount-input"
+                    />
+                    <p>Discount: Rs.{discountAmount.toFixed(2)}</p>
+                    <p>Total (after discount): Rs.{discountedTotal.toFixed(2)}</p>
+                </div>
             </div>
 
             {/* Type Selection */}
