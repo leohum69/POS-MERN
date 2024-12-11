@@ -32,9 +32,9 @@ const Logs = () => {
         let filtered = orders;
 
         if (type === 'retail') {
-            filtered = filtered.filter(order => !order.customerName);
+            filtered = filtered.filter(order => order.orderType === 'retail');
         } else if (type === 'wholesale') {
-            filtered = filtered.filter(order => order.customerName);
+            filtered = filtered.filter(order => order.orderType === 'wholesale');
         }
 
         if (date) {
@@ -106,7 +106,10 @@ const Logs = () => {
                                 <th>Type</th>
                                 <th>Customer Name</th>
                                 <th>Customer Phone</th>
-                                <th>Total Price</th>
+                                <th>Total Before Discount</th>
+                                <th>Discount (%)</th>
+                                <th>Discount Amount</th>
+                                <th>Total After Discount</th>
                                 <th>Order Date</th>
                                 <th>Order Details</th>
                             </tr>
@@ -115,20 +118,22 @@ const Logs = () => {
                             {filteredOrders.map((order, index) => (
                                 <tr key={index}>
                                     <td>{order._id}</td>
-                                    <td>{order.customerName ? 'Wholesale' : 'Retail'}</td>
+                                    <td>{order.orderType}</td>
                                     <td>{order.customerName || 'N/A'}</td>
                                     <td>{order.customerPhone || 'N/A'}</td>
-                                    <td>Rs.{order.totalPrice.toFixed(2)}</td>
+                                    <td>Rs.{order.totalPriceBeforeDiscount.toFixed(2)}</td>
+                                    <td>{order.discountPercentage || 0}%</td>
+                                    <td>Rs.{order.discountAmount.toFixed(2)}</td>
+                                    <td>Rs.{order.totalPriceAfterDiscount.toFixed(2)}</td>
                                     <td>{new Date(order.date).toLocaleDateString()}</td>
                                     <td>
                                         <ul>
                                             {order.orderDetails.map((item, idx) => (
                                                 <li key={idx}>
-                                                {item.itemname} - 
-                                                Qty: {item.quantity}, 
-                                                Price: Rs.{item.price.toFixed(2)}, 
-                                                Discount: Rs.{(item.discount || 0).toFixed(2)}
-                                            </li>
+                                                    {item.itemname} - 
+                                                    Qty: {item.quantity}, 
+                                                    Price: Rs.{item.price.toFixed(2)}
+                                                </li>
                                             ))}
                                         </ul>
                                     </td>

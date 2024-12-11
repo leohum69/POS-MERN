@@ -88,17 +88,26 @@ const PlaceOrder = () => {
             quantity: item.quantity,
             price: item.price,
         }));
-
+    
+        const totalPriceBeforeDiscount = totalValue;
+        const discountAmount = totalPriceBeforeDiscount * (discountPercentage / 100);
+        const totalPriceAfterDiscount = totalPriceBeforeDiscount - discountAmount;
+    
+        const payload = {
+            customerName: customerName,
+            customerPhone: customerPhone,
+            orderType: type,
+            orderDetails,
+            totalPriceBeforeDiscount,
+            discountPercentage,
+            discountAmount,
+            totalPriceAfterDiscount,
+        };
+    
         try {
-            const response = await axios.post('http://localhost:8080/place-order', {
-                orderDetails,
-                customerName: type === 'wholesale' ? customerName : '',
-                customerPhone: type === 'wholesale' ? customerPhone : '',
-                totalPrice: discountedTotal,
-                discount: discountPercentage,
-            });
-
+            const response = await axios.post('http://localhost:8080/place-order', payload);
             setMessage(response.data.message || 'Order placed successfully!');
+            // Reset fields
             setSelectedItems([]);
             setCustomerName('');
             setCustomerPhone('');
@@ -107,6 +116,7 @@ const PlaceOrder = () => {
             setDiscountAmount(0);
             setDiscountedTotal(0);
         } catch (error) {
+            console.error('Error placing the order:', error);
             setMessage('Error placing the order.');
         }
     };
@@ -128,6 +138,12 @@ const PlaceOrder = () => {
         <div className="place-order">
             <Navbar />
             <h2>Place Your Order</h2>
+
+            {/* Type Selection */}
+            <select onChange={(e) => setType(e.target.value)} value={type}>
+                <option value="retail">Retail</option>
+                <option value="wholesale">Wholesale</option>
+            </select>
 
             {/* Search Box */}
             <input
@@ -240,14 +256,8 @@ const PlaceOrder = () => {
                 </div>
             </div>
 
-            {/* Type Selection */}
-            <select onChange={(e) => setType(e.target.value)} value={type}>
-                <option value="retail">Retail</option>
-                <option value="wholesale">Wholesale</option>
-            </select>
-
             {/* Wholesale Info */}
-            {type === 'wholesale' && (
+            {
                 <div className="customer-info">
                     <input
                         type="text"
@@ -262,7 +272,7 @@ const PlaceOrder = () => {
                         placeholder="Customer Phone"
                     />
                 </div>
-            )}
+            }
 
             <button type="submit" onClick={handleSubmitOrder}>
                 Place Order
