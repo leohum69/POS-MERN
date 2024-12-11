@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Navbar from './navbar';
 import './placeholder.css';
-
 const PlaceOrder = () => {
     const [items, setItems] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -25,10 +24,34 @@ const PlaceOrder = () => {
                     price: item.price ?? 0
                 }));
                 setItems(updatedItems);
-                setFilteredItems(updatedItems);
+                adjustPricesForType(type, updatedItems);
             })
             .catch(error => console.error('Error fetching data:', error));
     }, []);
+
+    const adjustPricesForType = (orderType, itemsList) => {
+        const updatedPrices = itemsList.map(item => ({
+            ...item,
+            price: orderType === 'retail' ? (item.price * 1.1).toFixed(2) : item.price
+        }));
+        setFilteredItems(updatedPrices);
+
+        // Update selectedItems to reflect the new prices
+        const updatedSelectedItems = selectedItems.map(selectedItem => {
+            const correspondingItem = updatedPrices.find(item => item.code === selectedItem.code);
+            return correspondingItem
+                ? { ...selectedItem, price: correspondingItem.price }
+                : selectedItem;
+        });
+        setSelectedItems(updatedSelectedItems);
+        calculateTotal(updatedSelectedItems);
+    };
+
+    const handleTypeChange = (e) => {
+        const newType = e.target.value;
+        setType(newType);
+        adjustPricesForType(newType, items);
+    };
 
     const handleSearchChange = (e) => {
         const search = e.target.value.toLowerCase();
@@ -41,11 +64,11 @@ const PlaceOrder = () => {
                         ...item,
                         price: item.price ?? 0
                     }));
-                    setFilteredItems(updatedItems);
+                    adjustPricesForType(type, updatedItems);
                 })
                 .catch(error => console.error('Error fetching filtered items:', error));
         } else {
-            setFilteredItems(items);
+            adjustPricesForType(type, items);
         }
     };
 
@@ -88,11 +111,11 @@ const PlaceOrder = () => {
             quantity: item.quantity,
             price: item.price,
         }));
-    
+
         const totalPriceBeforeDiscount = totalValue;
         const discountAmount = totalPriceBeforeDiscount * (discountPercentage / 100);
         const totalPriceAfterDiscount = totalPriceBeforeDiscount - discountAmount;
-    
+
         const payload = {
             customerName: customerName,
             customerPhone: customerPhone,
@@ -103,7 +126,7 @@ const PlaceOrder = () => {
             discountAmount,
             totalPriceAfterDiscount,
         };
-    
+
         try {
             const response = await axios.post('http://localhost:8080/place-order', payload);
             setMessage(response.data.message || 'Order placed successfully!');
@@ -134,13 +157,14 @@ const PlaceOrder = () => {
         setDiscountedTotal(finalTotal);
     }, [totalValue, discountPercentage]);
 
+
     return (
         <div className="place-order">
             <Navbar />
             <h2>Place Your Order</h2>
 
             {/* Type Selection */}
-            <select onChange={(e) => setType(e.target.value)} value={type}>
+            <select onChange={handleTypeChange} value={type}>
                 <option value="retail">Retail</option>
                 <option value="wholesale">Wholesale</option>
             </select>
