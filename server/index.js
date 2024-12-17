@@ -3,6 +3,9 @@ const bodyParser = require('body-parser');
 const ejs = require('ejs');
 const mongoose = require('mongoose');
 const cors = require('cors');
+var converter = require('number-to-words');
+const fs = require('fs');
+const { exec } = require('child_process');
 
 
 const app = express();
@@ -47,6 +50,119 @@ const orderSchema = new mongoose.Schema({
 });
 
 const Order = mongoose.model("Order", orderSchema, "orders");
+
+
+const formatReceipt = (order) => {
+  const maxItemNameLength = 14; // Adjust to the maximum length you want for item names
+  let formattedItems = order.orderDetails
+    .map((item) => {
+      const itemName = item.itemname.length > maxItemNameLength
+        ? item.itemname.slice(0, maxItemNameLength) // Truncate if it's too long
+        : item.itemname.padEnd(maxItemNameLength); // Pad with spaces if short
+
+      const quantity = item.quantity.toString().padStart(4); // Right-align quantity
+      const price = `Rs.${item.price.toFixed(2)}`.padStart(10); // Right-align price
+
+      return `${itemName} x ${quantity} @ ${price}`;
+    })
+    .join('\n');
+
+  if(order.customerName == "") {
+
+const receiptContent = 
+` G.M.Autos & Haji Wheel Alignment
+===================================
+            INVOICE
+===================================
+Inv Num: ${order._id}
+Date: ${new Date().toLocaleString()}
+Order Type: ${order.orderType}
+-----------------------------------
+Items:
+${formattedItems}
+-----------------------------------
+Subtotal: Rs.${order.totalPriceBeforeDiscount.toFixed(2)}
+Discount: Rs.${order.discountAmount.toFixed(2)}
+Total: Rs.${order.totalPriceAfterDiscount.toFixed(2)}
+===================================
+Rs.${converter.toWords(order.totalPriceAfterDiscount)} Only
+===================================
+No Return or Exchange with out Invoice
+Used item could not be returned or exchange
+Electrical Items could not be returned or exchange No return or exchange with out this invoice
+Thanks to Visit us, See you again
+Thanks for Shoping
+`;
+    return receiptContent;
+
+  }else {
+const receiptContent = 
+` G.M.Autos & Haji Wheel Alignment
+===================================
+            INVOICE
+===================================
+Inv Num: ${order._id}
+Date: ${new Date().toLocaleString()}
+Customer Name: ${order.customerName}
+Customer Phone: ${order.customerPhone}
+Order Type: ${order.orderType}
+-----------------------------------
+Items:
+${formattedItems}
+-----------------------------------
+Subtotal: Rs.${order.totalPriceBeforeDiscount.toFixed(2)}
+Discount: Rs.${order.discountAmount.toFixed(2)}
+Total: Rs.${order.totalPriceAfterDiscount.toFixed(2)}
+===================================
+Rs.${converter.toWords(order.totalPriceAfterDiscount)} Only
+===================================
+No Return or Exchange with out Invoice
+Used item could not be returned or exchange
+Electrical Items could not be returned or exchange No return or exchange with out this invoice
+Thanks to Visit us, See you again
+Thanks for Shoping
+`;
+    return receiptContent;
+  }
+
+};
+
+const saveReceiptToFile = async (order) => {
+  try {
+    // Generate the receipt content dynamically using the order object and format it
+    const receiptContent = formatReceipt(order);
+
+    // Define the file path where the receipt will be saved
+    const filePath = './receipt.txt';
+
+    // Save the receipt content to the file
+    fs.writeFileSync(filePath, receiptContent, 'utf8');
+    console.log(`Receipt saved to ${filePath}`);
+
+    // After saving, print the saved file (just simulate the printing here)
+    await printFile(filePath);  // This function prints the saved file
+
+  } catch (error) {
+    console.error('Error in saveReceiptToFile function:', error);
+  }
+};
+
+async function printFile(filePath) {
+
+  const printCommand = `notepad /p ${filePath}`;
+
+  exec(printCommand, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error printing the file: ${error.message}`);
+      return;
+    }
+    if (stderr) {
+      console.error(`stderr: ${stderr}`);
+      return;
+    }
+    console.log(`File printed successfully!`);
+  });
+}
 
 
 app.post('/login', async (req, res) => {
@@ -120,6 +236,7 @@ app.post('/place-order', async (req, res) => {
     discountPercentage,
     discountAmount,
     totalPriceAfterDiscount,
+    printReceipt,
   } = req.body;
 
   // Validate orderDetails
@@ -149,12 +266,20 @@ app.post('/place-order', async (req, res) => {
     });
 
     await order.save();
+    if (printReceipt) {
+      // Call the new API or receipt logic
+      const receiptResponse = await saveReceiptToFile(order);
+      if (receiptResponse.error) {
+        return res.status(500).json({ message: 'Order placed but failed to print receipt.' });
+      }
+    }
     res.status(201).json({ message: 'Order placed successfully!' });
   } catch (error) {
     console.error('Error placing order:', error);
     res.status(500).json({ message: 'Server error while placing the order.' });
   }
 });
+
 
  
 app.get('/orders', async (req, res) => {

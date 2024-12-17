@@ -15,6 +15,7 @@ const PlaceOrder = () => {
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
     const [message, setMessage] = useState('');
+    const [printReceipt, setPrintReceipt] = useState(false);
 
     useEffect(() => {
         axios.get('http://localhost:8080/items')
@@ -125,6 +126,7 @@ const PlaceOrder = () => {
             discountPercentage,
             discountAmount,
             totalPriceAfterDiscount,
+            printReceipt,
         };
 
         try {
@@ -297,6 +299,17 @@ const PlaceOrder = () => {
                     />
                 </div>
             }
+            {/* Print Receipt Checkbox */}
+            <div className="print-receipt">
+                <label>
+                    <input
+                        type="checkbox"
+                        checked={printReceipt}
+                        onChange={(e) => setPrintReceipt(e.target.checked)}
+                    />
+                    Print Receipt
+                </label>
+            </div>
 
             <button type="submit" onClick={handleSubmitOrder}>
                 Place Order
