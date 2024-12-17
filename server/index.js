@@ -7,6 +7,11 @@ var converter = require('number-to-words');
 const fs = require('fs');
 const { exec } = require('child_process');
 
+const escpos = require('escpos');
+const USB = require('escpos-usb');
+const device = new USB(); // Automatically selects first connected USB printer
+const printer = new escpos.Printer(device);
+
 
 const app = express();
 
@@ -52,117 +57,156 @@ const orderSchema = new mongoose.Schema({
 const Order = mongoose.model("Order", orderSchema, "orders");
 
 
-const formatReceipt = (order) => {
-  const maxItemNameLength = 14; // Adjust to the maximum length you want for item names
-  let formattedItems = order.orderDetails
-    .map((item) => {
-      const itemName = item.itemname.length > maxItemNameLength
-        ? item.itemname.slice(0, maxItemNameLength) // Truncate if it's too long
-        : item.itemname.padEnd(maxItemNameLength); // Pad with spaces if short
+const printReceipt2 = async (order) => {
+  const lineSeparator = '------------------------------------------------';
+  const lineSeparator2 = '================================================';
 
-      const quantity = item.quantity.toString().padStart(4); // Right-align quantity
-      const price = `Rs.${item.price.toFixed(2)}`.padStart(10); // Right-align price
+  // Adjust column widths for 80mm thermal printer
+  const maxItemNameLength = 28; // Adjust for item name column width
+  const columnSpacing = 4; // Space between columns
 
-      return `${itemName} x ${quantity} @ ${price}`;
-    })
-    .join('\n');
+  const formattedItems = order.orderDetails
+  .map((item, index) => {
+    // Counter for the item (1-based index)
+    const counter = (index + 1).toString().padEnd(3, ' '); // Right-align and ensure a fixed width for the counter (e.g., 3 digits)
 
-  if(order.customerName == "") {
+    // Truncate item name if too long or pad with spaces if short
+    const itemName = item.itemname.length > maxItemNameLength
+      ? item.itemname.slice(0, maxItemNameLength)
+      : item.itemname.padEnd(maxItemNameLength, ' ');
 
-const receiptContent = 
-` G.M.Autos & Haji Wheel Alignment
-===================================
-            INVOICE
-===================================
-Inv Num: ${order._id}
-Date: ${new Date().toLocaleString()}
-Order Type: ${order.orderType}
------------------------------------
-Items:
-${formattedItems}
------------------------------------
-Subtotal: Rs.${order.totalPriceBeforeDiscount.toFixed(2)}
-Discount: Rs.${order.discountAmount.toFixed(2)}
-Total: Rs.${order.totalPriceAfterDiscount.toFixed(2)}
-===================================
-Rs.${converter.toWords(order.totalPriceAfterDiscount)} Only
-===================================
+    // Right-align quantity with proper spacing
+    const quantity = item.quantity.toString().padStart(4, ' ');
+
+    // Right-align price with proper spacing
+    const price = `${item.price.toFixed(2)}`.padStart(8, ' ');
+
+    // Return the formatted line for the item with padding between columns, including the counter
+    return `|${counter}|${itemName}|${quantity}|${price}|`;
+  })
+  .join('\n');
+
+  const lineWidth = 20; // Adjust this based on your printer's maximum line width
+
+  // Function to format and pad text
+  function formatAndPadText(order, width) {
+      const lines = [
+          `Subtotal: Rs.${order.totalPriceBeforeDiscount.toFixed(2)}`,
+          `Discount: Rs.${order.discountAmount.toFixed(2)}`,
+          `Total:    Rs.${order.totalPriceAfterDiscount.toFixed(2)}`
+      ];
+  
+      // Pad each line to the specified width
+      return lines.map(line => {
+          const padding = ' '.repeat(width - line.length); // Calculate padding
+          return line + padding; // Add padding to the right of the line
+      }).join('\n'); // Join all lines with a newline
+  }
+  
+  const formattedText = formatAndPadText(order, lineWidth);
+    const name =
+`
+G.M.Autos & Haji Wheel Alignment
+`;
+    const invoice = 
+`
+INVOICE
+`;
+    const invoicenum =
+`
+Invoice Num : ${order._id}
+Date : ${new Date().toLocaleString()}
+`;
+
+    const dabba = 
+`
++----------------------------------------------+
+|Sr.|Item Name                   | QTY| Price  |
++----------------------------------------------+
+`;
+
+
+  const receiptContent = 
+`
 No Return or Exchange with out Invoice
 Used item could not be returned or exchange
-Electrical Items could not be returned or exchange No return or exchange with out this invoice
-Thanks to Visit us, See you again
-Thanks for Shoping
+Electrical items could not be returned or exchange
+No return or exchange without this invoice
+Thanks to Visit us. See you again
+
+Thanks For Shopping
 `;
-    return receiptContent;
 
-  }else {
-const receiptContent = 
-` G.M.Autos & Haji Wheel Alignment
-===================================
-            INVOICE
-===================================
-Inv Num: ${order._id}
-Date: ${new Date().toLocaleString()}
-Customer Name: ${order.customerName}
-Customer Phone: ${order.customerPhone}
-Order Type: ${order.orderType}
------------------------------------
-Items:
-${formattedItems}
------------------------------------
-Subtotal: Rs.${order.totalPriceBeforeDiscount.toFixed(2)}
-Discount: Rs.${order.discountAmount.toFixed(2)}
-Total: Rs.${order.totalPriceAfterDiscount.toFixed(2)}
-===================================
-Rs.${converter.toWords(order.totalPriceAfterDiscount)} Only
-===================================
-No Return or Exchange with out Invoice
-Used item could not be returned or exchange
-Electrical Items could not be returned or exchange No return or exchange with out this invoice
-Thanks to Visit us, See you again
-Thanks for Shoping
-`;
-    return receiptContent;
-  }
-
-};
-
-const saveReceiptToFile = async (order) => {
-  try {
-    // Generate the receipt content dynamically using the order object and format it
-    const receiptContent = formatReceipt(order);
-
-    // Define the file path where the receipt will be saved
-    const filePath = './receipt.txt';
-
-    // Save the receipt content to the file
-    fs.writeFileSync(filePath, receiptContent, 'utf8');
-    console.log(`Receipt saved to ${filePath}`);
-
-    // After saving, print the saved file (just simulate the printing here)
-    await printFile(filePath);  // This function prints the saved file
-
-  } catch (error) {
-    console.error('Error in saveReceiptToFile function:', error);
-  }
-};
-
-async function printFile(filePath) {
-
-  const printCommand = `notepad /p ${filePath}`;
-
-  exec(printCommand, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error printing the file: ${error.message}`);
+  device.open((err) => {
+    if (err) {
+      console.error('Failed to connect to printer:', err);
       return;
     }
-    if (stderr) {
-      console.error(`stderr: ${stderr}`);
-      return;
-    }
-    console.log(`File printed successfully!`);
+
+    // Print the receipt content using Font A
+    printer
+      .align('CT')
+      .style('b')
+      .size(2, 2)
+      .text(name)
+      .size(0, 0)
+      .font('A') // Use Font A for clarity
+      .style('normal') // Normal style
+      .align('lt') // Left-align to preserve formatting
+      .text(lineSeparator2)
+      .align('ct')
+      .style('b')
+      .size(1, 1)
+      .text(invoice)
+      .size(0, 0)
+      .font('A') // Use Font A for clarity
+      .style('normal') // Normal style
+      .align('lt') 
+      .text(lineSeparator2)
+      .style('b')
+      .align('ct')
+      .size(0, 0)
+      .text(invoicenum)
+      .size(0, 0)
+      .font('A') // Use Font A for clarity
+      .style('normal') // Normal style
+      .align('lt') 
+      .text(lineSeparator2)
+      .align('lt')
+      .style('b')
+      .text(dabba)
+      .text(formattedItems)
+      .text("+----------------------------------------------+")
+      .size(0, 0)
+      .font('A') // Use Font A for clarity
+      .style('normal') // Normal style
+      .align('lt') 
+      .text(lineSeparator2)
+      .align('rt')
+      .style('b')
+      .text(formattedText)
+      .size(0, 0)
+      .font('A') // Use Font A for clarity
+      .style('normal') // Normal style
+      .align('lt') 
+      .text(lineSeparator2)
+      .align('ct')
+      .text(`Rs.${converter.toWords(order.totalPriceAfterDiscount)} Only`)
+      .align('lt')
+      .text(lineSeparator2)
+      .align('ct')
+      .style('b')
+      .text(receiptContent)
+
+      .feed(2) // Add spacing at the end
+      .cut()
+      .close();
   });
-}
+};
+
+
+
+
 
 
 app.post('/login', async (req, res) => {
@@ -268,7 +312,7 @@ app.post('/place-order', async (req, res) => {
     await order.save();
     if (printReceipt) {
       // Call the new API or receipt logic
-      const receiptResponse = await saveReceiptToFile(order);
+      const receiptResponse = await printReceipt2(order);
       if (receiptResponse.error) {
         return res.status(500).json({ message: 'Order placed but failed to print receipt.' });
       }
