@@ -42,7 +42,7 @@ body {
 
 .search-bar button {
     padding: 10px 20px;
-    background-color: #007bff;
+    background-color: #1e0b4f;
     color: #fff;
     border: none;
     border-radius: 4px;
@@ -51,7 +51,7 @@ body {
 }
 
 .search-bar button:hover {
-    background-color: #0056b3;
+    background-color: #1e0b4f;
 }
 
 /* Table styling */
@@ -69,7 +69,7 @@ body {
 }
 
 .items-table-content th {
-    background-color: #007bff;
+    background-color: #1e0b4f;
     color: white;
     font-weight: bold;
 }
@@ -92,6 +92,7 @@ body {
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
+    margin: 5px 0px;
 }
 
 .items-table-content button:hover {
@@ -99,30 +100,72 @@ body {
 }
 
 .items-table-content .edit-btn {
-    background-color: #ffc107;
+    margin-left: 1px;
+    background-color: #292385;
     color: #fff;
 }
 
 .items-table-content .edit-btn:hover {
-    background-color: #e0a800;
+    background-color: #292385;
 }
 
 .items-table-content .save-btn {
-    background-color: #28a745;
+    margin-bottom: 5px;
+    background-color: #292385;
     color: #fff;
 }
 
 .items-table-content .save-btn:hover {
-    background-color: #218838;
+    background-color: #292385;
 }
 
 .items-table-content .cancel-btn {
-    background-color: #dc3545;
+    margin-top: 5px;
+    background-color: #cb2122;
+    color: #fff;
+}
+.items-table-content .delete{
+    margin-left: 1px;
+    background-color: #cb2122;
     color: #fff;
 }
 
+.add-item-form .add-item {
+    background-color: #292385;
+    color: #fff;
+}
+
+.add-item-form .add-item:hover {
+    background-color: #3b349e;
+    color: #fff;
+}
+.add-item-toggle .add {
+    background-color: #292385;
+    color: #fff;
+}
+
+.add-item-toggle .add:hover {
+    background-color: #3b349e;
+    color: #fff;
+}
+
+.items-table-content .delete:hover{
+    margin-left: 1px;
+    background-color: #cb2122;
+    color: #fff;
+}
+
+.add.active {
+    background-color: #cb2122;
+    color: white;
+}
+.add.active:hover {
+    background-color: #b33031;
+    color: white;
+}
+
 .items-table-content .cancel-btn:hover {
-    background-color: #c82333;
+    background-color: #b33031;
 }
 
 /* Input fields for editing */

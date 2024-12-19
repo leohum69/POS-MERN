@@ -37,7 +37,7 @@ body {
 }
 
 .form-input:focus {
-  border-color: #007bff;
+  border-color: #292385;
   outline: none;
 }
 
@@ -62,11 +62,11 @@ body {
 
 /* Specific Button Styles */
 .login-button {
-  background-color: #007bff;
+  background-color: #292385;
 }
 
 .login-button:hover {
-  background-color: #0056b3;
+  background-color: #292385;
 }
 
 .forgot-password-button {
@@ -93,7 +93,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #007bff;
+  background-color: #292385;
   color: #fff;
   padding: 10px 20px;
 }
@@ -142,7 +142,7 @@ body {
 }
 
 .items-table-content th {
-  background-color: #4CAF50;
+  background-color: #cb2122;
   color: white;
 }
 

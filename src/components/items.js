@@ -17,7 +17,7 @@ const ItemsTable = () => {
     }, []);
 
     const fetchItems = () => {
-        axios.get('http://localhost:8080/items')
+        axios.get('http://192.168.10.76:8080/items')
             .then(response => {
                 const data = response.data.map(item => ({
                     id: item._id,
@@ -35,13 +35,23 @@ const ItemsTable = () => {
                 console.error('Error fetching data:', error);
             });
     };
+    const handleDelete = (id) => {
+        axios.delete(`http://192.168.10.76:8080/items/${id}`)
+            .then(() => {
+                fetchItems(); // Refresh items after deleting
+            })
+            .catch(error => {
+                console.error('Error deleting item:', error);
+            });
+    };
+    
 
     const handleSearchChange = (e) => {
         const search = e.target.value.toLowerCase();
         setSearchTerm(search);
 
         if (search.length > 0) {
-            axios.get(`http://localhost:8080/items/search?name=${search}`)
+            axios.get(`http://192.168.10.76:8080/items/search?name=${search}`)
                 .then(response => {
                     const data = response.data.map(item => ({
                         id: item._id,
@@ -66,7 +76,7 @@ const ItemsTable = () => {
     };
 
     const handleUpdate = (id) => {
-        axios.put(`http://localhost:8080/items/${id}`, editedValues)
+        axios.put(`http://192.168.10.76:8080/items/${id}`, editedValues)
             .then(() => {
                 fetchItems();
                 setEditItemId(null);
@@ -78,7 +88,7 @@ const ItemsTable = () => {
     };
 
     const handleAddItem = () => {
-        axios.post('http://localhost:8080/items', newItem)
+        axios.post('http://192.168.10.76:8080/items', newItem)
             .then(() => {
                 fetchItems(); // Refresh items after adding
                 setNewItem({ name: '', code: '', price: '', size: '', scheme: '', model: '' }); // Reset form
@@ -106,7 +116,10 @@ const ItemsTable = () => {
 
             {/* Toggle Add Item Form */}
             <div className="add-item-toggle">
-                <button onClick={() => setShowAddForm(!showAddForm)}>
+            <button
+                className={showAddForm ? 'add active' : 'add'}
+                onClick={() => setShowAddForm(!showAddForm)}
+                >
                     {showAddForm ? "Cancel" : "Add New Item"}
                 </button>
             </div>
@@ -151,7 +164,7 @@ const ItemsTable = () => {
                         value={newItem.model}
                         onChange={(e) => setNewItem({ ...newItem, model: e.target.value })}
                     />
-                    <button onClick={handleAddItem}>Add Item</button>
+                    <button class="add-item" onClick={handleAddItem}>Add Item</button>
                 </div>
             )}
 
@@ -210,8 +223,8 @@ const ItemsTable = () => {
                                         />
                                     </td>
                                     <td>
-                                        <button onClick={() => handleUpdate(item.id)}>Save</button>
-                                        <button onClick={() => setEditItemId(null)}>Cancel</button>
+                                        <button className="save-btn" onClick={() => handleUpdate(item.id)}>Save</button>
+                                        <button className="cancel-btn" onClick={() => setEditItemId(null)}>Cancel</button>
                                     </td>
                                 </>
                             ) : (
@@ -223,7 +236,8 @@ const ItemsTable = () => {
                                     <td>{item.scheme}</td>
                                     <td>{item.model}</td>
                                     <td>
-                                        <button onClick={() => handleEdit(item)}>Edit</button>
+                                        <button class="edit-btn" onClick={() => handleEdit(item)}>Edit</button>
+                                        <button class="delete" onClick={() => handleDelete(item.id)}>Delete</button>
                                     </td>
                                 </>
                             )}

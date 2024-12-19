@@ -12,7 +12,7 @@ function Login() {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post("http://localhost:8080/login", {
+      const response = await axios.post("http://192.168.10.76:8080/login", {
         username,
         password,
       });

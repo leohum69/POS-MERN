@@ -7,10 +7,10 @@ var converter = require('number-to-words');
 const fs = require('fs');
 const { exec } = require('child_process');
 
-const escpos = require('escpos');
-const USB = require('escpos-usb');
-const device = new USB(); // Automatically selects first connected USB printer
-const printer = new escpos.Printer(device);
+// const escpos = require('escpos');
+// const USB = require('escpos-usb');
+// const device = new USB(); // Automatically selects first connected USB printer
+// const printer = new escpos.Printer(device);
 
 
 const app = express();
@@ -52,6 +52,7 @@ const orderSchema = new mongoose.Schema({
   discountAmount: Number, // Discount amount in currency
   totalPriceAfterDiscount: Number, // Final total after applying the discount
   date: { type: Date, default: Date.now }, // Order creation date
+  orderNum: Number, // Order number
 });
 
 const Order = mongoose.model("Order", orderSchema, "orders");
@@ -70,6 +71,7 @@ const printReceipt2 = async (order) => {
     // Counter for the item (1-based index)
     const counter = (index + 1).toString().padEnd(3, ' '); // Right-align and ensure a fixed width for the counter (e.g., 3 digits)
 
+    
     // Truncate item name if too long or pad with spaces if short
     const itemName = item.itemname.length > maxItemNameLength
       ? item.itemname.slice(0, maxItemNameLength)
@@ -106,31 +108,66 @@ const printReceipt2 = async (order) => {
   const formattedText = formatAndPadText(order, lineWidth);
     const name =
 `
-G.M.Autos & Haji Wheel Alignment
-`;
-    const invoice = 
+G.M.Autos
+Haji Wheel Alignment`;
+const address = 
 `
-INVOICE
-`;
-    const invoicenum =
-`
-Invoice Num : ${order._id}
-Date : ${new Date().toLocaleString()}
-`;
+Main taxi stand road malik raees market near CRM school Dhoke kala Khan shamasabad Rawalpindi
+
+Phone# 0345-5078190`;
+
+//     const invoice = 
+// `
+// INVOICE
+// `;
+
+
+const totalLength = 48; // Total length of the formatted string
+
+// First line: Invoice Number and Date
+let invoiceNum = `Invoice Num : ${order.orderNum}`;
+let date = `Date : ${new Date().toLocaleDateString()}`;
+
+// Split if the total length exceeds the limit
+if (invoiceNum.length + date.length > totalLength) {
+    invoiceNum = invoiceNum.slice(0, totalLength - date.length); // truncate invoiceNum
+}
+
+const spaceBetween1 = totalLength - (invoiceNum.length + date.length);
+const padding1 = ' '.repeat(spaceBetween1 > 0 ? spaceBetween1 : 1);
+const formattedInvoice = `${invoiceNum}${padding1}${date}`;
+
+// Second line: Customer Name and Time
+let customerName = `Customer : ${order.customerName || 'N/A'}`;
+const time = `Time : ${new Date().toLocaleTimeString()}`;
+
+// Split if the total length exceeds the limit
+if (customerName.length + time.length > totalLength) {
+    customerName = customerName.slice(0, totalLength - time.length); // truncate customerName
+}
+
+const spaceBetween2 = totalLength - (customerName.length + time.length);
+const padding2 = ' '.repeat(spaceBetween2 > 0 ? spaceBetween2 : 1);
+const formattedCustomerTime = `${customerName}${padding2}${time}`;
+
+// Combine the lines
+const formattedOutput = `${formattedInvoice}\n${formattedCustomerTime}`;
+
+
 
     const dabba = 
 `
 +----------------------------------------------+
 |Sr.|Item Name                   | QTY| Price  |
-+----------------------------------------------+
-`;
++----------------------------------------------+`;
 
 
   const receiptContent = 
 `
 No Return or Exchange with out Invoice
 Used item could not be returned or exchange
-Electrical items could not be returned or exchange
+Electrical items could not be returned or
+exchange
 No return or exchange without this invoice
 Thanks to Visit us. See you again
 
@@ -147,26 +184,22 @@ Thanks For Shopping
     printer
       .align('CT')
       .style('b')
-      .size(2, 2)
+      .size(1, 1)
       .text(name)
       .size(0, 0)
       .font('A') // Use Font A for clarity
       .style('normal') // Normal style
-      .align('lt') // Left-align to preserve formatting
-      .text(lineSeparator2)
-      .align('ct')
-      .style('b')
-      .size(1, 1)
-      .text(invoice)
+      .align('ct') // Left-align to preserve formatting
+      .text(address)
       .size(0, 0)
       .font('A') // Use Font A for clarity
       .style('normal') // Normal style
       .align('lt') 
       .text(lineSeparator2)
       .style('b')
-      .align('ct')
+      .align('lt')
       .size(0, 0)
-      .text(invoicenum)
+      .text(formattedOutput)
       .size(0, 0)
       .font('A') // Use Font A for clarity
       .style('normal') // Normal style
@@ -193,12 +226,22 @@ Thanks For Shopping
       .align('ct')
       .text(`Rs.${converter.toWords(order.totalPriceAfterDiscount)} Only`)
       .align('lt')
-      .text(lineSeparator2)
-      .align('ct')
+      .text(lineSeparator2);
+      // if(!(order.customerName === "" && order.customerPhone === "")){
+      //   printer
+      //   .align('lt')
+      //   .style('b')
+      //   .text(`Customer Name : ${order.customerName}`)
+      //   .text(`Customer Phone : ${order.customerPhone}`)
+      //   .text(lineSeparator2);
+      // }
+      printer
+      .align('lt')
+      .size(0,0)
       .style('b')
       .text(receiptContent)
 
-      .feed(2) // Add spacing at the end
+      // .feed(2) // Add spacing at the end
       .cut()
       .close();
   });
@@ -281,6 +324,7 @@ app.post('/place-order', async (req, res) => {
     discountAmount,
     totalPriceAfterDiscount,
     printReceipt,
+    ordernum,
   } = req.body;
 
   // Validate orderDetails
@@ -307,15 +351,13 @@ app.post('/place-order', async (req, res) => {
       discountPercentage: discountPercentage || 0,
       discountAmount: discountAmount || 0,
       totalPriceAfterDiscount: totalPriceAfterDiscount || totalPriceBeforeDiscount || 0,
+      orderNum: ordernum,
     });
 
     await order.save();
     if (printReceipt) {
       // Call the new API or receipt logic
-      const receiptResponse = await printReceipt2(order);
-      if (receiptResponse.error) {
-        return res.status(500).json({ message: 'Order placed but failed to print receipt.' });
-      }
+      // const receiptResponse = await printReceipt2(order);
     }
     res.status(201).json({ message: 'Order placed successfully!' });
   } catch (error) {
@@ -349,6 +391,28 @@ app.put('/items/:id', async (req, res) => {
       res.status(500).send({ message: "Server error while updating the item." });
   }
 });
+
+app.delete('/items/:id', async (req, res) => {
+  const { id } = req.params; // Extract item ID from the URL
+  try {
+    // Find and delete the item by its ID
+    const deletedItem = await Item.findByIdAndDelete(id);
+    
+    // If no item was found, return an error
+    if (!deletedItem) {
+      return res.status(404).send({ message: "Item not found!" });
+    }
+
+    // Send success response after deleting the item
+    res.status(200).send({ message: "Item deleted successfully!" });
+  } catch (error) {
+    // Handle errors during the delete process
+    console.error("Error deleting item:", error);
+    res.status(500).send({ message: "Server error while deleting the item." });
+  }
+});
+
+
 
 
 

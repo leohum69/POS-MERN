@@ -5,9 +5,13 @@
 }
 
 .filter-section label {
-    margin: 0 10px;
+    margin-right: 15px; /* Add some space to the right of the label */
     font-size: 16px;
 }
+.label-text{
+    margin-left: 7px;
+}
+
 .filter-section input[type="date"] {
     padding: 5px 10px;
     font-size: 14px;
@@ -31,6 +35,7 @@
 .filter-section input[type="date"]:hover {
     border-color: #0056b3;
 }
+
 
 
 

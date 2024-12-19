@@ -10,7 +10,7 @@ const Logs = () => {
     const [selectedDate, setSelectedDate] = useState(''); // Track selected date
 
     useEffect(() => {
-        axios.get('http://localhost:8080/orders')
+        axios.get('http://192.168.10.76:8080/orders')
             .then(response => {
                 setOrders(response.data);
                 setFilteredOrders(response.data);
@@ -92,7 +92,7 @@ const Logs = () => {
                         value={selectedDate}
                         onChange={(e) => handleDateChange(e.target.value)}
                     />
-                    Filter by Date
+                    <span class="label-text">Filter by Date</span>
                 </label>
             </div>
 
@@ -117,7 +117,7 @@ const Logs = () => {
                         <tbody>
                             {filteredOrders.map((order, index) => (
                                 <tr key={index}>
-                                    <td>{order._id}</td>
+                                    <td>{order.orderNum}</td>
                                     <td>{order.orderType}</td>
                                     <td>{order.customerName || 'N/A'}</td>
                                     <td>{order.customerPhone || 'N/A'}</td>

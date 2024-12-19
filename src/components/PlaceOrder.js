@@ -18,7 +18,7 @@ const PlaceOrder = () => {
     const [printReceipt, setPrintReceipt] = useState(false);
 
     useEffect(() => {
-        axios.get('http://localhost:8080/items')
+        axios.get('http://192.168.10.76:8080/items')
             .then(response => {
                 const updatedItems = response.data.map(item => ({
                     ...item,
@@ -59,7 +59,7 @@ const PlaceOrder = () => {
         setSearchTerm(search);
 
         if (search.length > 0) {
-            axios.get(`http://localhost:8080/items/search?name=${search}`)
+            axios.get(`http://192.168.10.76:8080/items/search?name=${search}`)
                 .then(response => {
                     const updatedItems = response.data.map(item => ({
                         ...item,
@@ -85,9 +85,12 @@ const PlaceOrder = () => {
     };
 
     const handleInputChange = (itemCode, field, value) => {
+        console.log(value);
+        let newValue = isNaN(value) ? 0 : value;
+        
         const updatedItems = selectedItems.map(item => {
             if (item.code === itemCode) {
-                return { ...item, [field]: value };
+                return { ...item, [field]: newValue };
             }
             return item;
         });
@@ -108,7 +111,7 @@ const PlaceOrder = () => {
 
     const handleSubmitOrder = async () => {
         const orderDetails = selectedItems.map(item => ({
-            itemname: item.name,
+            itemname: item.name+"-"+item.model,
             quantity: item.quantity,
             price: item.price,
         }));
@@ -116,6 +119,17 @@ const PlaceOrder = () => {
         const totalPriceBeforeDiscount = totalValue;
         const discountAmount = totalPriceBeforeDiscount * (discountPercentage / 100);
         const totalPriceAfterDiscount = totalPriceBeforeDiscount - discountAmount;
+        let ordernum = -1;
+        
+        try {
+            const response = await axios.get('http://192.168.10.76:8080/orders');
+            const orders23 = response.data;
+            ordernum = orders23.length + 1; // Ensure this happens before creating the payload
+            console.log('Calculated ordernum:', ordernum);
+        } catch (error) {
+            console.error('Error fetching orders:', error);
+            return; // Exit early if there was an error
+        }
 
         const payload = {
             customerName: customerName,
@@ -127,10 +141,11 @@ const PlaceOrder = () => {
             discountAmount,
             totalPriceAfterDiscount,
             printReceipt,
+            ordernum,
         };
 
         try {
-            const response = await axios.post('http://localhost:8080/place-order', payload);
+            const response = await axios.post('http://192.168.10.76:8080/place-order', payload);
             setMessage(response.data.message || 'Order placed successfully!');
             // Reset fields
             setSelectedItems([]);
@@ -204,7 +219,7 @@ const PlaceOrder = () => {
                                 <td>{item.scheme}</td>
                                 <td>{item.model}</td>
                                 <td>
-                                    <button onClick={() => handleItemSelection(item)}>Add to Cart</button>
+                                    <button class="add-to-cart" onClick={() => handleItemSelection(item)}>Add to Cart</button>
                                 </td>
                             </tr>
                         ))}
