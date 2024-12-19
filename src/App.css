@@ -126,7 +126,7 @@ body {
 
 .items-table {
   padding: 20px;
-  background-color: #f4f4f4;
+  background-color: #fff;
 }
 
 .items-table-content {
@@ -147,7 +147,7 @@ body {
 }
 
 .items-table-content tr:hover {
-  background-color: #f1f1f1;
+  background-color: #fff;
 }
 
 .search-box {

@@ -124,8 +124,19 @@ const PlaceOrder = () => {
         try {
             const response = await axios.get('http://192.168.10.76:8080/orders');
             const orders23 = response.data;
-            ordernum = orders23.length + 1; // Ensure this happens before creating the payload
-            console.log('Calculated ordernum:', ordernum);
+            if (orders23.length == 0) {
+                ordernum = 1; // No orders exist, so the first order number is 1
+                // console.log('Calculated ordernum (no orders):', ordernum);
+            } else {
+                // Find the highest order id from existing orders
+                const maxOrderId = orders23.reduce((maxId, order) => {
+                    return Math.max(maxId, order.orderNum);
+                }, 0);
+                
+                ordernum = maxOrderId + 1; // Increment the max ID by 1
+                // console.log('Calculated ordernum (max order ID):', ordernum);
+            }
+            // console.log('Calculated ordernum:', ordernum);
         } catch (error) {
             console.error('Error fetching orders:', error);
             return; // Exit early if there was an error

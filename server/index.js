@@ -378,6 +378,24 @@ app.get('/orders', async (req, res) => {
   }
 });
 
+app.delete('/orders/:orderNum', async (req, res) => {
+  try {
+    const { orderNum } = req.params;
+
+    // Find and delete the order
+    const deletedOrder = await Order.findOneAndDelete({ orderNum: orderNum });
+
+    if (!deletedOrder) {
+      return res.status(404).json({ message: 'Order not found.' });
+    }
+
+    res.status(200).json({ message: 'Order deleted successfully.', deletedOrder });
+  } catch (error) {
+    console.error('Error deleting order:', error);
+    res.status(500).json({ message: 'Server error while deleting order.' });
+  }
+});
+
 
 
 app.put('/items/:id', async (req, res) => {

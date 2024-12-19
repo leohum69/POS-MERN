@@ -27,6 +27,23 @@ const Logs = () => {
         setSelectedDate(date);
         filterOrders(filter, date);
     };
+    const handleDelete = (orderNum) => {
+        if (window.confirm('Are you sure you want to delete this order?')) {
+            axios.delete(`http://192.168.10.76:8080/orders/${orderNum}`)
+                .then(() => {
+                    // Update state after successful deletion
+                    const updatedOrders = orders.filter(order => order.orderNum !== orderNum);
+                    setOrders(updatedOrders);
+                    setFilteredOrders(updatedOrders);
+                    alert('Order deleted successfully!');
+                })
+                .catch(error => {
+                    console.error('Error deleting the order:', error);
+                    alert('Failed to delete the order. Please try again.');
+                });
+        }
+    };
+    
 
     const filterOrders = (type, date) => {
         let filtered = orders;
@@ -112,10 +129,11 @@ const Logs = () => {
                                 <th>Total After Discount</th>
                                 <th>Order Date</th>
                                 <th>Order Details</th>
+                                <th>Delete</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredOrders.map((order, index) => (
+                            {filteredOrders.slice().reverse().map((order, index) => (
                                 <tr key={index}>
                                     <td>{order.orderNum}</td>
                                     <td>{order.orderType}</td>
@@ -137,6 +155,12 @@ const Logs = () => {
                                             ))}
                                         </ul>
                                     </td>
+                                    <button 
+                                        className="delete-btn" 
+                                        onClick={() => handleDelete(order.orderNum)}
+                                    >
+                                    Delete
+                                    </button>
                                 </tr>
                             ))}
                         </tbody>
