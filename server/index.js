@@ -116,10 +116,6 @@ Main taxi stand road malik raees market near CRM school Dhoke kala Khan shamasab
 
 Phone# 0345-5078190`;
 
-//     const invoice = 
-// `
-// INVOICE
-// `;
 
 
 const totalLength = 48; // Total length of the formatted string
@@ -227,14 +223,7 @@ Thanks For Shopping
       .text(`Rs.${converter.toWords(order.totalPriceAfterDiscount)} Only`)
       .align('lt')
       .text(lineSeparator2);
-      // if(!(order.customerName === "" && order.customerPhone === "")){
-      //   printer
-      //   .align('lt')
-      //   .style('b')
-      //   .text(`Customer Name : ${order.customerName}`)
-      //   .text(`Customer Phone : ${order.customerPhone}`)
-      //   .text(lineSeparator2);
-      // }
+
       printer
       .align('lt')
       .size(0,0)

@@ -126,7 +126,7 @@ const PlaceOrder = () => {
             const orders23 = response.data;
             if (orders23.length == 0) {
                 ordernum = 1; // No orders exist, so the first order number is 1
-                // console.log('Calculated ordernum (no orders):', ordernum);
+                
             } else {
                 // Find the highest order id from existing orders
                 const maxOrderId = orders23.reduce((maxId, order) => {
@@ -134,9 +134,8 @@ const PlaceOrder = () => {
                 }, 0);
                 
                 ordernum = maxOrderId + 1; // Increment the max ID by 1
-                // console.log('Calculated ordernum (max order ID):', ordernum);
+                
             }
-            // console.log('Calculated ordernum:', ordernum);
         } catch (error) {
             console.error('Error fetching orders:', error);
             return; // Exit early if there was an error
