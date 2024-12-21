@@ -35,48 +35,53 @@
     height: 200px; /* Increased height for a bigger logo */
 }
 
-  
-  /* Login Box */
-  .form-container {
-    background-color: white;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    width: 300px;
-    text-align: center;
-  }
-  
-  .form-title {
-    margin-bottom: 20px;
-    font-size: 1.5rem;
-    color: #333;
-  }
-  
-  .user-form .form-input {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
-  
-  .button-group {
-    margin-top: 10px;
-  }
-  
-  .form-button {
-    width: 100%;
-    padding: 10px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1rem;
-  }
-  
-  .form-button:hover {
-    background-color: #0056b3;
-  }
+  /* General Reset for Box Sizing */
+* {
+  box-sizing: border-box;
+}
 
-/* Navbar Styling */
+/* Login Box */
+.form-container {
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  width: 300px;
+  text-align: center;
+  margin: auto; /* Center horizontally */
+  overflow: hidden; /* Prevent any overflow */
+}
+
+.form-title {
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.user-form .form-input {
+  width: 100%; /* Ensure inputs fit inside the container */
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  max-width: 100%; /* Prevent the input from overflowing */
+}
+
+.button-group {
+  margin-top: 10px;
+}
+
+.form-button {
+  width: 100%; /* Make button span the full width */
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.form-button:hover {
+  background-color: #0056b3;
+}
