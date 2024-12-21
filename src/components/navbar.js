@@ -7,6 +7,9 @@ function Navbar() {
       <h1 className="navbar-title">Welcome</h1>
       <ul className="navbar-links">
         <li>
+          <Link to="/dashboard">Dashboard</Link>
+        </li>
+        <li>
           <Link to="/items">Items</Link>
         </li>
         <li>

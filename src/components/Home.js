@@ -23,7 +23,7 @@ function Dashboard() {
     },
     content: {
       marginTop: '20px',
-      backgroundColor: '#f9f9f9',
+      backgroundColor: '#fff',
       padding: '20px',
       borderRadius: '8px',
       boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -32,7 +32,7 @@ function Dashboard() {
     },
     heading: {
       fontSize: '1.8em',
-      color: '#007BFF',
+      color: '#cb2122',
       marginBottom: '10px',
     },
     paragraph: {
@@ -42,6 +42,7 @@ function Dashboard() {
   };
 
   return (
+    <div className="home">
     <div style={styles.dashboard}>
       {/* Navbar Component */}
       <Navbar />
@@ -56,7 +57,7 @@ function Dashboard() {
         <h2 style={styles.heading}>Welcome to GM AUTOS & Haji Wheel Alignment</h2>
         <p style={styles.paragraph}>Choose an option from the Navbar to get started.</p>
       </div>
-    </div>
+    </div></div>
   );
 }
 

@@ -112,7 +112,7 @@ G.M.Autos
 Haji Wheel Alignment`;
 const address = 
 `
-Main taxi stand road malik raees market near CRM school Dhoke kala Khan shamasabad Rawalpindi
+Main Taxi Stand Road Malik Raees Market Near CRM School Dhoke kala Khan Shamasabad Rawalpindi
 
 Phone# 0345-5078190`;
 

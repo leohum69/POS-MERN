@@ -174,7 +174,6 @@ body {
     font-size: 14px;
     box-sizing: border-box;
 }
-
 /* Mobile responsiveness */
 @media screen and (max-width: 768px) {
     .items-table {
@@ -183,19 +182,92 @@ body {
 
     .search-bar {
         flex-direction: column;
+        align-items: stretch; /* Stretch inputs and buttons to full width */
     }
 
     .search-bar input {
         margin-bottom: 10px;
         margin-right: 0;
+        width: 100%; /* Full width for input */
     }
 
     .search-bar button {
-        width: 100%;
+        width: 100%; /* Full width for button */
     }
 
     .items-table-content th,
     .items-table-content td {
         padding: 8px;
+    }
+
+    .items-table-content button {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+
+    .items-table-content input[type="text"],
+    .items-table-content input[type="number"] {
+        font-size: 12px;
+        padding: 6px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .items-table {
+        padding: 5px;
+    }
+
+    .search-bar {
+        flex-direction: column;
+        align-items: stretch; /* Ensure proper alignment */
+    }
+
+    .search-bar input {
+        font-size: 14px;
+        padding: 8px;
+    }
+
+    .search-bar button {
+        font-size: 14px;
+        padding: 8px;
+    }
+
+    .items-table-content {
+        font-size: 12px; /* Smaller font for table */
+        overflow-x: auto; /* Enable horizontal scrolling for small screens */
+        display: block; /* Make table scrollable */
+    }
+
+    .items-table-content th,
+    .items-table-content td {
+        font-size: 10px;
+        padding: 6px;
+    }
+
+    .items-table-content button {
+        font-size: 10px;
+        padding: 4px 8px;
+    }
+
+    .items-table-content input[type="text"],
+    .items-table-content input[type="number"] {
+        font-size: 10px;
+        padding: 5px;
+    }
+
+    .items-table-content td,
+    .items-table-content th {
+        display: block; /* Stack cells vertically */
+        width: 100%;
+    }
+
+    .items-table-content tr {
+        display: block;
+        margin-bottom: 10px; /* Add space between rows */
+    }
+
+    .items-table-content th {
+        text-align: left;
+        font-size: 12px;
     }
 }

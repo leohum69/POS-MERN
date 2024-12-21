@@ -115,6 +115,7 @@ const Logs = () => {
 
             {/* Logs Table */}
             <div className="logs-table-container">
+            <div className="logs-table-wrapper">
                 {filteredOrders.length > 0 ? (
                     <table className="logs-table">
                         <thead>
@@ -168,6 +169,7 @@ const Logs = () => {
                 ) : (
                     <p>No orders found.</p>
                 )}
+                </div>
             </div>
         </div>
     );

@@ -1,0 +1,9 @@
+{
+    "apps": [
+        {
+            "name": "gm-pos",
+            "script": "npm",
+            "args" : "start"
+        }
+    ]
+}
