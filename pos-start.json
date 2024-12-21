@@ -1,9 +1,12 @@
 {
-    "apps": [
-        {
-            "name": "gm-pos",
-            "script": "npm",
-            "args" : "start"
-        }
-    ]
+  "apps": [{
+    "name": "GM-POS-Client",
+    "script": "node_modules/react-scripts/scripts/start.js",
+    "args": "start",
+    "cwd": "./",
+    "env": {
+      "PORT": 3000, 
+      "NODE_ENV": "production"  
+    }
+  }]
 }
