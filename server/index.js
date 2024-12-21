@@ -245,7 +245,7 @@ app.post('/login', async (req, res) => {
   const { username, password} = req.body;
   console.log(username, password);
   try {
-    if(username === "admin" && password === "admin123$"){
+    if((username === "aqibgmautos" && password === "gmautos123") || (username === "aligmautos" && password === "gmautos123")) {
       return res.status(200).json({ message: "Login successful"});
     } else {
       return res.status(401).send({ message: "Invalid credentials" });
