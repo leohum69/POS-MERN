@@ -94,9 +94,6 @@ body {
     margin: 5px 0px;
 }
 
-.items-table-content button:hover {
-    /* opacity: 0.9; */
-}
 
 .items-table-content .edit-btn {
     margin-left: 1px;
