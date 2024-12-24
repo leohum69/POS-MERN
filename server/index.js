@@ -281,18 +281,18 @@ app.get('/items/search', async (req, res) => {
 
 app.post("/items", async (req, res) => {
   try {
-      const { name, price, quantity, model, code,retail, Stock } = req.body;
+      const { name, price, size, model, code,retail, stock } = req.body;
       // console.log(req.body);
 
       // Create a new item with only the provided fields
       const newItem = new Item({
           name: name || "N/A",         // Default to "N/A" if name is not provided
           price: price || 0,          // Default to 0 if price is not provided
-          size: quantity || 0,    // Default to 0 if quantity is not provided
+          size: size || 0,    // Default to 0 if quantity is not provided
           model: model || "N/A",      // Default to "N/A" if model is not provided
           code: code || "N/A",         // Default to "N/A" if code is not provided
           retail: retail || 0,
-          stock: Stock || 0
+          stock: stock || 0
       });
 
       // Save the item to the database
@@ -328,7 +328,7 @@ app.post('/place-order', async (req, res) => {
 
   // Ensure all order details are valid
   const isValidDetails = orderDetails.every(
-    (item) => item.itemname && item.quantity > 0 && item.price >= 0
+    (item) => item.itemid && item.quantity > 0 && item.price >= 0
   );
 
   if (!isValidDetails) {
@@ -336,6 +336,24 @@ app.post('/place-order', async (req, res) => {
   }
 
   try {
+    // Deduct stock for each item in the order
+    for (let item of orderDetails) {
+      const product = await Item.findById(item.itemid); // Fetch item by ObjectId
+
+      if (!product) {
+        return res.status(400).json({ message: `Product with ID ${item.itemid} not found.` });
+      }
+
+      if (product.stock < item.quantity) {
+        return res.status(400).json({ message: `Insufficient stock for ${product.name}-${product.model}.` });
+      }
+
+      // Update the stock
+      product.stock -= item.quantity;
+      await product.save();
+    }
+
+    // Create the order
     const order = new Order({
       customerName: customerName || '', // Optional for wholesale
       customerPhone: customerPhone || '', // Optional for wholesale
@@ -349,10 +367,13 @@ app.post('/place-order', async (req, res) => {
     });
 
     await order.save();
+
+    // Optionally print receipt if required
     if (printReceipt) {
       // Call the new API or receipt logic
       // const receiptResponse = await printReceipt2(order);
     }
+
     res.status(201).json({ message: 'Order placed successfully!' });
   } catch (error) {
     console.error('Error placing order:', error);
