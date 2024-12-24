@@ -9,7 +9,7 @@ const ItemsTable = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [editItemId, setEditItemId] = useState(null); // Track ID of item being edited
     const [editedValues, setEditedValues] = useState({}); // Store edited values
-    const [newItem, setNewItem] = useState({ name: '', code: '', price: '', size: '', scheme: '', model: '' }); // For adding a new item
+    const [newItem, setNewItem] = useState({ name: '', price: '', size: '', model: '', code: '', retail: '', stock: '' }); // For adding a new item
     const [showAddForm, setShowAddForm] = useState(false); // To toggle add item form
 
     useEffect(() => {
@@ -22,11 +22,12 @@ const ItemsTable = () => {
                 const data = response.data.map(item => ({
                     id: item._id,
                     name: item.name || 'N/A',
-                    code: item.code || 'N/A',
                     price: item.price || 'N/A',
                     size: item.size || 'N/A',
-                    scheme: item.scheme || 'N/A',
-                    model: item.model || 'N/A'
+                    model: item.model || 'N/A',
+                    code: item.code || 'N/A',
+                    retail: item.retail || 'N/A',
+                    stock: item.stock || 'N/A'
                 }));
                 setItems(data);
                 setFilteredItems(data);
@@ -35,6 +36,7 @@ const ItemsTable = () => {
                 console.error('Error fetching data:', error);
             });
     };
+
     const handleDelete = (id) => {
         axios.delete(`http://192.168.10.76:8080/items/${id}`)
             .then(() => {
@@ -44,7 +46,6 @@ const ItemsTable = () => {
                 console.error('Error deleting item:', error);
             });
     };
-    
 
     const handleSearchChange = (e) => {
         const search = e.target.value.toLowerCase();
@@ -56,11 +57,12 @@ const ItemsTable = () => {
                     const data = response.data.map(item => ({
                         id: item._id,
                         name: item.name || 'N/A',
-                        code: item.code || 'N/A',
                         price: item.price || 'N/A',
                         size: item.size || 'N/A',
-                        scheme: item.scheme || 'N/A',
-                        model: item.model || 'N/A'
+                        model: item.model || 'N/A',
+                        code: item.code || 'N/A',
+                        retail: item.retail || 'N/A',
+                        stock: item.stock || 'N/A'
                     }));
                     setFilteredItems(data);
                 })
@@ -88,10 +90,11 @@ const ItemsTable = () => {
     };
 
     const handleAddItem = () => {
+        // console.log(newItem);
         axios.post('http://192.168.10.76:8080/items', newItem)
             .then(() => {
                 fetchItems(); // Refresh items after adding
-                setNewItem({ name: '', code: '', price: '', size: '', scheme: '', model: '' }); // Reset form
+                setNewItem({ name: '', price: '', size: '', model: '', code: '', retail: '', stock: '' }); // Reset form
                 setShowAddForm(false); // Hide the add form
             })
             .catch(error => {
@@ -102,6 +105,7 @@ const ItemsTable = () => {
     return (
         <div className="items-table">
             <Navbar />
+        
 
             {/* Search Bar */}
             <div className="search-bar">
@@ -135,28 +139,16 @@ const ItemsTable = () => {
                         onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
                     />
                     <input
-                        type="text"
-                        placeholder="Code"
-                        value={newItem.code}
-                        onChange={(e) => setNewItem({ ...newItem, code: e.target.value })}
-                    />
-                    <input
                         type="number"
                         placeholder="Price"
                         value={newItem.price}
                         onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
                     />
                     <input
-                        type="text"
-                        placeholder="Size"
+                        type="number"
+                        placeholder="size"
                         value={newItem.size}
                         onChange={(e) => setNewItem({ ...newItem, size: e.target.value })}
-                    />
-                    <input
-                        type="text"
-                        placeholder="Scheme"
-                        value={newItem.scheme}
-                        onChange={(e) => setNewItem({ ...newItem, scheme: e.target.value })}
                     />
                     <input
                         type="text"
@@ -164,7 +156,25 @@ const ItemsTable = () => {
                         value={newItem.model}
                         onChange={(e) => setNewItem({ ...newItem, model: e.target.value })}
                     />
-                    <button class="add-item" onClick={handleAddItem}>Add Item</button>
+                    <input
+                        type="text"
+                        placeholder="Code"
+                        value={newItem.code}
+                        onChange={(e) => setNewItem({ ...newItem, code: e.target.value })}
+                    />
+                    <input
+                        type="number"
+                        placeholder="Retail"
+                        value={newItem.retail}
+                        onChange={(e) => setNewItem({ ...newItem, retail: e.target.value })}
+                    />
+                    <input
+                        type="number"
+                        placeholder="stock"
+                        value={newItem.stock}
+                        onChange={(e) => setNewItem({ ...newItem, stock: e.target.value })}
+                    />
+                    <button className="add-item" onClick={handleAddItem}>Add Item</button>
                 </div>
             )}
 
@@ -173,11 +183,12 @@ const ItemsTable = () => {
                 <thead>
                     <tr>
                         <th>Name</th>
-                        <th>Code</th>
                         <th>Price</th>
-                        <th>Size</th>
-                        <th>Scheme</th>
+                        <th>size</th>
                         <th>Model</th>
+                        <th>Code</th>
+                        <th>Retail</th>
+                        <th>Stock</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -193,7 +204,6 @@ const ItemsTable = () => {
                                             onChange={(e) => setEditedValues({ ...editedValues, name: e.target.value })}
                                         />
                                     </td>
-                                    <td>{item.code}</td>
                                     <td>
                                         <input
                                             type="number"
@@ -203,16 +213,9 @@ const ItemsTable = () => {
                                     </td>
                                     <td>
                                         <input
-                                            type="text"
+                                            type="number"
                                             value={editedValues.size}
                                             onChange={(e) => setEditedValues({ ...editedValues, size: e.target.value })}
-                                        />
-                                    </td>
-                                    <td>
-                                        <input
-                                            type="text"
-                                            value={editedValues.scheme}
-                                            onChange={(e) => setEditedValues({ ...editedValues, scheme: e.target.value })}
                                         />
                                     </td>
                                     <td>
@@ -223,6 +226,27 @@ const ItemsTable = () => {
                                         />
                                     </td>
                                     <td>
+                                        <input
+                                            type="text"
+                                            value={editedValues.code}
+                                            onChange={(e) => setEditedValues({ ...editedValues, code: e.target.value })}
+                                        />
+                                    </td>
+                                    <td>
+                                        <input
+                                            type="number"
+                                            value={editedValues.retail}
+                                            onChange={(e) => setEditedValues({ ...editedValues, retail: e.target.value })}
+                                        />
+                                    </td>
+                                    <td>
+                                        <input
+                                            type="number"
+                                            value={editedValues.stock}
+                                            onChange={(e) => setEditedValues({ ...editedValues, stock: e.target.value })}
+                                        />
+                                    </td>
+                                    <td>
                                         <button className="save-btn" onClick={() => handleUpdate(item.id)}>Save</button>
                                         <button className="cancel-btn" onClick={() => setEditItemId(null)}>Cancel</button>
                                     </td>
@@ -230,14 +254,15 @@ const ItemsTable = () => {
                             ) : (
                                 <>
                                     <td>{item.name}</td>
-                                    <td>{item.code}</td>
                                     <td>{item.price}</td>
                                     <td>{item.size}</td>
-                                    <td>{item.scheme}</td>
                                     <td>{item.model}</td>
+                                    <td>{item.code}</td>
+                                    <td>{item.retail}</td>
+                                    <td>{item.stock}</td>
                                     <td>
-                                        <button class="edit-btn" onClick={() => handleEdit(item)}>Edit</button>
-                                        <button class="delete" onClick={() => handleDelete(item.id)}>Delete</button>
+                                        <button className="edit-btn" onClick={() => handleEdit(item)}>Edit</button>
+                                        <button className="delete" onClick={() => handleDelete(item.id)}>Delete</button>
                                     </td>
                                 </>
                             )}

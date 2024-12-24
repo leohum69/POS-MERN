@@ -28,9 +28,11 @@ mongoose.connect("mongodb://localhost:27017/workdb", { useNewUrlParser: true});
 const itemschema = {
   name: String,
   price: Number,
-  quantity: Number,
+  size: Number,
   model: String,
-  code: String
+  code: String,
+  retail: Number,
+  stock: Number
 };
 
 const Item = mongoose.model("Item", itemschema,"items");
@@ -243,7 +245,7 @@ Thanks For Shopping
 
 app.post('/login', async (req, res) => {
   const { username, password} = req.body;
-  console.log(username, password);
+  // console.log(username, password);
   try {
     if((username === "aqibgmautos" && password === "gmautos123") || (username === "aligmautos" && password === "gmautos123")) {
       return res.status(200).json({ message: "Login successful"});
@@ -279,15 +281,18 @@ app.get('/items/search', async (req, res) => {
 
 app.post("/items", async (req, res) => {
   try {
-      const { name, price, quantity, model, code } = req.body;
+      const { name, price, quantity, model, code,retail, Stock } = req.body;
+      // console.log(req.body);
 
       // Create a new item with only the provided fields
       const newItem = new Item({
           name: name || "N/A",         // Default to "N/A" if name is not provided
           price: price || 0,          // Default to 0 if price is not provided
-          quantity: quantity || 0,    // Default to 0 if quantity is not provided
+          size: quantity || 0,    // Default to 0 if quantity is not provided
           model: model || "N/A",      // Default to "N/A" if model is not provided
-          code: code || "N/A"         // Default to "N/A" if code is not provided
+          code: code || "N/A",         // Default to "N/A" if code is not provided
+          retail: retail || 0,
+          stock: Stock || 0
       });
 
       // Save the item to the database
@@ -385,19 +390,40 @@ app.delete('/orders/:orderNum', async (req, res) => {
   }
 });
 
-
-
 app.put('/items/:id', async (req, res) => {
-  const { id } = req.params;
-  const { name, price, scheme, size } = req.body;
+  const { id } = req.params; // Extract item ID from the URL
+  const {
+    name = "N/A",
+    price = 0,
+    size = 0,
+    model = "N/A",
+    code = "N/A",
+    retail = 0,
+    stock = 0
+  } = req.body; // Extract and assign default values to the fields
+
   try {
-      await Item.findByIdAndUpdate(id, { name, price, scheme, size });
-      res.status(200).send({ message: "Item updated successfully!" });
+    // Find the item by ID and update only the provided fields
+    const updatedItem = await Item.findByIdAndUpdate(
+      id,
+      { name, price, size, model, code, retail, stock },
+      { new: true, runValidators: true }
+    );
+
+    // If the item does not exist, return an error
+    if (!updatedItem) {
+      return res.status(404).send({ message: "Item not found!" });
+    }
+
+    // Send the updated item in the response
+    res.status(200).send({ message: "Item updated successfully!", item: updatedItem });
   } catch (error) {
-      console.error("Error updating item:", error);
-      res.status(500).send({ message: "Server error while updating the item." });
+    // Handle errors during the update process
+    console.error("Error updating item:", error);
+    res.status(500).send({ message: "Server error while updating the item." });
   }
 });
+
 
 app.delete('/items/:id', async (req, res) => {
   const { id } = req.params; // Extract item ID from the URL
