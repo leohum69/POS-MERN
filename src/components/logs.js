@@ -10,7 +10,7 @@ const Logs = () => {
     const [selectedDate, setSelectedDate] = useState(''); // Track selected date
 
     useEffect(() => {
-        axios.get('http://192.168.10.76:8080/orders')
+        axios.get('http://localhost:8080/orders')
             .then(response => {
                 setOrders(response.data);
                 setFilteredOrders(response.data);
@@ -29,7 +29,7 @@ const Logs = () => {
     };
     const handleDelete = (orderNum) => {
         if (window.confirm('Are you sure you want to delete this order?')) {
-            axios.delete(`http://192.168.10.76:8080/orders/${orderNum}`)
+            axios.delete(`http://localhost:8080/orders/${orderNum}`)
                 .then(() => {
                     // Update state after successful deletion
                     const updatedOrders = orders.filter(order => order.orderNum !== orderNum);

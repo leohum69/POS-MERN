@@ -17,7 +17,7 @@ const ItemsTable = () => {
     }, []);
 
     const fetchItems = () => {
-        axios.get('http://192.168.10.76:8080/items')
+        axios.get('http://localhost:8080/items')
             .then(response => {
                 const data = response.data.map(item => ({
                     id: item._id,
@@ -38,7 +38,7 @@ const ItemsTable = () => {
     };
 
     const handleDelete = (id) => {
-        axios.delete(`http://192.168.10.76:8080/items/${id}`)
+        axios.delete(`http://localhost:8080/items/${id}`)
             .then(() => {
                 fetchItems(); // Refresh items after deleting
             })
@@ -52,7 +52,7 @@ const ItemsTable = () => {
         setSearchTerm(search);
 
         if (search.length > 0) {
-            axios.get(`http://192.168.10.76:8080/items/search?name=${search}`)
+            axios.get(`http://localhost:8080/items/search?name=${search}`)
                 .then(response => {
                     const data = response.data.map(item => ({
                         id: item._id,
@@ -78,7 +78,7 @@ const ItemsTable = () => {
     };
 
     const handleUpdate = (id) => {
-        axios.put(`http://192.168.10.76:8080/items/${id}`, editedValues)
+        axios.put(`http://localhost:8080/items/${id}`, editedValues)
             .then(() => {
                 fetchItems();
                 setEditItemId(null);
@@ -91,7 +91,7 @@ const ItemsTable = () => {
 
     const handleAddItem = () => {
         // console.log(newItem);
-        axios.post('http://192.168.10.76:8080/items', newItem)
+        axios.post('http://localhost:8080/items', newItem)
             .then(() => {
                 fetchItems(); // Refresh items after adding
                 setNewItem({ name: '', price: '', size: '', model: '', code: '', retail: '', stock: '' }); // Reset form

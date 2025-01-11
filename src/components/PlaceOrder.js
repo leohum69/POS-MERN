@@ -19,7 +19,7 @@ const PlaceOrder = () => {
     const [printReceipt, setPrintReceipt] = useState(false);
 
     useEffect(() => {
-        axios.get('http://192.168.10.76:8080/items')
+        axios.get('http://localhost:8080/items')
             .then(response => {
                 const updatedItems = response.data.map(item => ({
                     ...item,
@@ -59,7 +59,7 @@ const PlaceOrder = () => {
         setSearchTerm(search);
 
         if (search.length > 0) {
-            axios.get(`http://192.168.10.76:8080/items/search?name=${search}`)
+            axios.get(`http://localhost:8080/items/search?name=${search}`)
                 .then(response => {
                     const updatedItems = response.data.map(item => ({
                         ...item,
@@ -126,7 +126,7 @@ const PlaceOrder = () => {
         let ordernum = -1;
 
         try {
-            const response = await axios.get('http://192.168.10.76:8080/orders');
+            const response = await axios.get('http://localhost:8080/orders');
             const orders23 = response.data;
             if (orders23.length === 0) {
                 ordernum = 1;
@@ -155,7 +155,7 @@ const PlaceOrder = () => {
         };
 
         try {
-            const response = await axios.post('http://192.168.10.76:8080/place-order', payload);
+            const response = await axios.post('http://localhost:8080/place-order', payload);
             setMessage(response.data.message || 'Order placed successfully!');
             setSelectedItems([]);
             setCustomerName('');
