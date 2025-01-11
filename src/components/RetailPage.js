@@ -4,9 +4,8 @@ import Navbar from './navbar';
 import './retail.css';
 
 const RetailPage = () => {
-    const [items, setItems] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [filteredItems, setFilteredItems] = useState([]);
+    const [suggestions, setSuggestions] = useState([]);
     const [selectedItems, setSelectedItems] = useState([]);
     const [totalValue, setTotalValue] = useState(0);
     const [discountPercentage, setDiscountPercentage] = useState(0);
@@ -17,59 +16,39 @@ const RetailPage = () => {
     const [message, setMessage] = useState('');
     const [printReceipt, setPrintReceipt] = useState(false);
 
-    useEffect(() => {
-        axios.get('http://localhost:8080/items')
-            .then(response => {
-                const updatedItems = response.data.map(item => ({
-                    ...item,
-                    price: item.retail ?? 0
-                }));
-                setItems(updatedItems);
-                setFilteredItems(updatedItems);
-            })
-            .catch(error => console.error('Error fetching data:', error));
-    }, []);
-
-
+    // Search for items and fetch suggestions
     const handleSearchChange = (e) => {
         const search = e.target.value.toLowerCase();
         setSearchTerm(search);
 
         if (search.length > 0) {
             axios.get(`http://localhost:8080/items/search?name=${search}`)
-                .then(response => {
-                    const updatedItems = response.data.map(item => ({
-                        ...item,
-                        price: item.price ?? 0
-                    }));
-                    setFilteredItems(updatedItems);
-                })
-                .catch(error => console.error('Error fetching filtered items:', error));
+                .then(response => setSuggestions(response.data))
+                .catch(error => console.error('Error fetching suggestions:', error));
         } else {
-            // adjustPricesForType(type, items);
+            setSuggestions([]);
         }
     };
 
+    // Add selected item to the editable list
     const handleItemSelection = (item) => {
         if (!selectedItems.some(selected => selected._id === item._id)) {
             const updatedItems = [
                 ...selectedItems,
-                { ...item, quantity: 1, price: item.price }
+                { ...item, quantity: 1, price: item.retail ?? 0 }
             ];
             setSelectedItems(updatedItems);
             calculateTotal(updatedItems);
+            setSearchTerm('');
+            setSuggestions([]);
         }
     };
 
+    // Update item quantity or price
     const handleInputChange = (itemId, field, value) => {
-        const newValue = isNaN(value) ? 0 : value;
-
         const updatedItems = selectedItems.map(item => {
             if (item._id === itemId) {
-                if (field === 'quantity' && newValue > item.stock) {
-                    alert('Quantity cannot be greater than stock');
-                    return { ...item, quantity: item.stock }; // Set quantity to stock if it exceeds stock
-                }
+                const newValue = field === 'quantity' ? Math.max(1, value) : value;
                 return { ...item, [field]: newValue };
             }
             return item;
@@ -78,17 +57,27 @@ const RetailPage = () => {
         calculateTotal(updatedItems);
     };
 
+    // Calculate total value and discount
     const calculateTotal = (items) => {
         const total = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
         setTotalValue(total);
     };
 
+    useEffect(() => {
+        const discount = (discountPercentage / 100) * totalValue;
+        const finalTotal = totalValue - discount;
+        setDiscountAmount(discount);
+        setDiscountedTotal(finalTotal);
+    }, [totalValue, discountPercentage]);
+
+    // Remove an item from the list
     const handleRemoveItem = (itemId) => {
         const updatedItems = selectedItems.filter(item => item._id !== itemId);
         setSelectedItems(updatedItems);
         calculateTotal(updatedItems);
     };
 
+    // Submit order
     const handleSubmitOrder = async () => {
         const orderDetails = selectedItems.map(item => ({
             itemid: item._id,
@@ -147,71 +136,39 @@ const RetailPage = () => {
         }
     };
 
-    const handleDiscountChange = (e) => {
-        const value = parseFloat(e.target.value) || 0;
-        setDiscountPercentage(value);
-    };
-
-    useEffect(() => {
-        const discount = (discountPercentage / 100) * totalValue;
-        const finalTotal = totalValue - discount;
-        setDiscountAmount(discount);
-        setDiscountedTotal(finalTotal);
-    }, [totalValue, discountPercentage]);
-
     return (
         <div className="place-order">
             <Navbar />
             <h2>Place Retail Order</h2>
 
+            {/* Search box */}
             <input
                 type="text"
                 value={searchTerm}
                 onChange={handleSearchChange}
-                placeholder="Search items..."
+                placeholder="Search for items..."
                 className="search-box"
             />
 
-            <div className="items-table-container">
-                <table className="items-table">
-                    <thead>
-                        <tr>
-                            <th>Code</th>
-                            <th>Name</th>
-                            <th>Price</th>
-                            <th>Size</th>
-                            <th>Scheme</th>
-                            <th>Model</th>
-                            <th>Stock</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredItems.map((item, index) => (
-                            <tr key={index}>
-                                <td>{item.code}</td>
-                                <td>{item.name}</td>
-                                <td>{item.price}</td>
-                                <td>{item.size}</td>
-                                <td>{item.scheme}</td>
-                                <td>{item.model}</td>
-                                <td>{item.stock}</td>
-                                <td>
-                                    <button className="add-to-cart" onClick={() => handleItemSelection(item)}>Add to Cart</button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+            {/* Suggestions dropdown */}
+            {suggestions.length > 0 && (
+                <ul className="suggestions-list">
+                    {suggestions.map(item => (
+                        <li key={item._id} onClick={() => handleItemSelection(item)}>
+                            {item.name} - {item.model} - Rs.{item.retail}
+                        </li>
+                    ))}
+                </ul>
+            )}
 
-            <h3>Cart</h3>
+            {/* Selected items */}
+            <h3>Selected Items</h3>
             <div className="cart-container">
                 {selectedItems.length > 0 ? (
                     <table className="cart-table">
                         <thead>
                             <tr>
-                                <th>code</th>
+                                <th>Code</th>
                                 <th>Name</th>
                                 <th>Quantity</th>
                                 <th>Price</th>
@@ -253,23 +210,24 @@ const RetailPage = () => {
                         </tbody>
                     </table>
                 ) : (
-                    <p>No items in the cart.</p>
+                    <p>No items selected.</p>
                 )}
             </div>
 
+            {/* Total and customer info */}
             <div className="total-price-container">
-                <div className="total-price">
-                    <p>Subtotal: Rs.{totalValue.toFixed(2)}</p>
-                    <input
-                        type="number"
-                        min="0"
-                        placeholder="Discount (%)"
-                        value={discountPercentage}
-                        onChange={handleDiscountChange}
-                        className="discount-input"
-                    />
-                    <p>Discount: Rs.{discountAmount.toFixed(2)}</p>
-                    <p>Total (after discount): Rs.{discountedTotal.toFixed(2)}</p>
+            <div className="total-price">
+                <p>Subtotal: Rs.{totalValue.toFixed(2)}</p>
+                <input
+                    type="number"
+                    min="0"
+                    placeholder="Discount (%)"
+                    value={discountPercentage}
+                    onChange={(e) => setDiscountPercentage(parseFloat(e.target.value) || 0)}
+                    className='discount-input'
+                />
+                <p>Discount: Rs.{discountAmount.toFixed(2)}</p>
+                <p>Total (after discount): Rs.{discountedTotal.toFixed(2)}</p>
                 </div>
             </div>
 

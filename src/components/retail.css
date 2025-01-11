@@ -316,3 +316,52 @@ p {
     background-color: #f1f1f1;
 }
 
+/* Style for the suggestions container */
+.suggestions-list {
+    position: absolute; /* Ensures the dropdown appears below the input */
+    background-color: white;
+    border: 1px solid #ddd; /* Light gray border */
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    width: 100%; /* Matches the width of the input field */
+    max-height: 200px; /* Limits the height for scrolling */
+    overflow-y: auto; /* Adds a scrollbar if the list exceeds max-height */
+    padding: 0;
+    margin: 0;
+    z-index: 1000; /* Ensures it appears above other elements */
+}
+
+/* Style for individual suggestion items */
+.suggestions-list li {
+    list-style: none; /* Removes default list styling */
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0; /* Light border between items */
+    font-size: 14px; /* Adjust font size as needed */
+    transition: background-color 0.2s ease; /* Smooth hover effect */
+}
+
+/* Hover effect for suggestion items */
+.suggestions-list li:hover {
+    background-color: #f7f7f7; /* Light gray on hover */
+}
+
+/* Style for the last item (removes bottom border) */
+.suggestions-list li:last-child {
+    border-bottom: none;
+}
+
+/* Scrollbar styling for suggestions (optional) */
+.suggestions-list::-webkit-scrollbar {
+    width: 6px; /* Width of scrollbar */
+}
+
+.suggestions-list::-webkit-scrollbar-thumb {
+    background-color: #ccc; /* Scrollbar thumb color */
+    border-radius: 3px; /* Rounded corners for thumb */
+}
+
+.suggestions-list::-webkit-scrollbar-thumb:hover {
+    background-color: #b3b3b3; /* Darker color on hover */
+}
+
