@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Navbar from './navbar';
-import './placeholder.css';
+import './retail.css';
 
-const PlaceOrder = () => {
+const RetailPage = () => {
     const [items, setItems] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredItems, setFilteredItems] = useState([]);
     const [selectedItems, setSelectedItems] = useState([]);
-    const [type, setType] = useState('retail');
     const [totalValue, setTotalValue] = useState(0);
     const [discountPercentage, setDiscountPercentage] = useState(0);
     const [discountAmount, setDiscountAmount] = useState(0);
@@ -23,36 +22,14 @@ const PlaceOrder = () => {
             .then(response => {
                 const updatedItems = response.data.map(item => ({
                     ...item,
-                    price: item.price ?? 0
+                    price: item.retail ?? 0
                 }));
                 setItems(updatedItems);
-                adjustPricesForType(type, updatedItems);
+                setFilteredItems(updatedItems);
             })
             .catch(error => console.error('Error fetching data:', error));
     }, []);
 
-    const adjustPricesForType = (orderType, itemsList) => {
-        const updatedPrices = itemsList.map(item => ({
-            ...item,
-            price: orderType === 'retail' ? item.retail : item.price
-        }));
-        setFilteredItems(updatedPrices);
-
-        const updatedSelectedItems = selectedItems.map(selectedItem => {
-            const correspondingItem = updatedPrices.find(item => item._id === selectedItem._id);
-            return correspondingItem
-                ? { ...selectedItem, price: correspondingItem.price }
-                : selectedItem;
-        });
-        setSelectedItems(updatedSelectedItems);
-        calculateTotal(updatedSelectedItems);
-    };
-
-    const handleTypeChange = (e) => {
-        const newType = e.target.value;
-        setType(newType);
-        adjustPricesForType(newType, items);
-    };
 
     const handleSearchChange = (e) => {
         const search = e.target.value.toLowerCase();
@@ -65,11 +42,11 @@ const PlaceOrder = () => {
                         ...item,
                         price: item.price ?? 0
                     }));
-                    adjustPricesForType(type, updatedItems);
+                    setFilteredItems(updatedItems);
                 })
                 .catch(error => console.error('Error fetching filtered items:', error));
         } else {
-            adjustPricesForType(type, items);
+            // adjustPricesForType(type, items);
         }
     };
 
@@ -144,7 +121,7 @@ const PlaceOrder = () => {
         const payload = {
             customerName,
             customerPhone,
-            orderType: type,
+            orderType: "retail",
             orderDetails,
             totalPriceBeforeDiscount,
             discountPercentage,
@@ -185,12 +162,7 @@ const PlaceOrder = () => {
     return (
         <div className="place-order">
             <Navbar />
-            <h2>Place Your Order</h2>
-
-            <select onChange={handleTypeChange} value={type}>
-                <option value="retail">Retail</option>
-                <option value="wholesale">Wholesale</option>
-            </select>
+            <h2>Place Retail Order</h2>
 
             <input
                 type="text"
@@ -336,4 +308,4 @@ const PlaceOrder = () => {
     );
 };
 
-export default PlaceOrder;
+export default RetailPage;

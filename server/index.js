@@ -466,6 +466,18 @@ app.delete('/items/:id', async (req, res) => {
   }
 });
 
+app.get('/items/search', (req, res) => {
+  const { name } = req.query;
+  if (!name) {
+      return res.status(400).json({ error: 'Search term is required' });
+  }
+
+  // Perform case-insensitive search (modify for database usage)
+  const regex = new RegExp(name, 'i');
+  const filteredItems = items.filter(item => regex.test(item.name));
+
+  res.json(filteredItems);
+});
 
 
 
