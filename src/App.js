@@ -5,6 +5,8 @@ import Home from "./components/Home";
 import Items from "./components/items";
 import RetailPage from "./components/RetailPage";
 import Logs from "./components/logs";
+import Customers from "./components/Customers";
+import Wholesale from "./components/Wholesale";
 import "./App.css";
 function App() {
   return (
@@ -15,6 +17,8 @@ function App() {
         <Route path="/items" element={<Items />} />
         <Route path="/retailpage" element={<RetailPage />} />
         <Route path="/logs" element={<Logs />} />
+        <Route path="/addcustomer" element={<Customers />} />
+        <Route path="/wholesale" element={<Wholesale />} />
       </Routes>
     </Router>
   );

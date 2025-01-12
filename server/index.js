@@ -55,9 +55,21 @@ const orderSchema = new mongoose.Schema({
   totalPriceAfterDiscount: Number, // Final total after applying the discount
   date: { type: Date, default: Date.now }, // Order creation date
   orderNum: Number, // Order number
+  opening : Number,
+  closing : Number,
 });
 
 const Order = mongoose.model("Order", orderSchema, "orders");
+
+
+const customerSchema = new mongoose.Schema({
+  name: { type: String},
+  phone: { type: String },
+  balance: { type: Number, default: 0 },
+});
+
+const Customer = mongoose.model('Customer', customerSchema, "customers");
+
 
 
 const printReceipt2 = async (order) => {
@@ -319,6 +331,8 @@ app.post('/place-order', async (req, res) => {
     totalPriceAfterDiscount,
     printReceipt,
     ordernum,
+    opening,
+    closing
   } = req.body;
 
   // Validate orderDetails
@@ -364,6 +378,8 @@ app.post('/place-order', async (req, res) => {
       discountAmount: discountAmount || 0,
       totalPriceAfterDiscount: totalPriceAfterDiscount || totalPriceBeforeDiscount || 0,
       orderNum: ordernum,
+      opening: opening,
+      closing: closing
     });
 
     await order.save();
@@ -477,6 +493,62 @@ app.get('/items/search', (req, res) => {
   const filteredItems = items.filter(item => regex.test(item.name));
 
   res.json(filteredItems);
+});
+
+
+app.post('/customers', async (req, res) => {
+  try {
+    const { name, phone, balance } = req.body;
+    const customer = new Customer({ name, phone, balance });
+    await customer.save();
+    res.status(201).json(customer);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+app.get('/customers', async (req, res) => {
+  try {
+    const customers = await Customer.find();
+    res.status(200).json(customers);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.get('/customers/:id', async (req, res) => {
+  try {
+    const customer = await Customer.findById(req.params.id);
+    if (!customer) return res.status(404).json({ message: 'Customer not found' });
+    res.status(200).json(customer);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.put('/customers/:id', async (req, res) => {
+  try {
+    const { name, phone, balance } = req.body;
+    const customer = await Customer.findByIdAndUpdate(
+      req.params.id,
+      { name, phone, balance },
+      { new: true }
+    );
+    if (!customer) return res.status(404).json({ message: 'Customer not found' });
+    res.status(200).json(customer);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+app.delete('/customers/:id', async (req, res) => {
+  try {
+    const customer = await Customer.findByIdAndDelete(req.params.id);
+    if (!customer) return res.status(404).json({ message: 'Customer not found' });
+    res.status(200).json({ message: 'Customer deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 

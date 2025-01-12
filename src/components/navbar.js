@@ -18,6 +18,12 @@ function Navbar() {
         <li>
           <Link to="/retailpage">Retail</Link>
         </li>
+        <li>
+          <Link to="/wholesale">Wholesale</Link>
+        </li>
+        <li>
+          <Link to="/addcustomer">Customers</Link>
+        </li>
       </ul>
     </nav>
   );
