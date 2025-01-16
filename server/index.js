@@ -7,10 +7,10 @@ var converter = require('number-to-words');
 const fs = require('fs');
 const { exec } = require('child_process');
 
-// const escpos = require('escpos');
-// const USB = require('escpos-usb');
-// const device = new USB(); // Automatically selects first connected USB printer
-// const printer = new escpos.Printer(device);
+ const escpos = require('escpos');
+ const USB = require('escpos-usb');
+ const device = new USB(); // Automatically selects first connected USB printer
+ const printer = new escpos.Printer(device);
 
 
 const app = express();
@@ -77,30 +77,40 @@ const printReceipt2 = async (order) => {
   const lineSeparator2 = '================================================';
 
   // Adjust column widths for 80mm thermal printer
-  const maxItemNameLength = 28; // Adjust for item name column width
-  const columnSpacing = 4; // Space between columns
+  const maxItemNameLength = 28; // Column width for item name
+const qtyWidth = 4;           // Column width for quantity
+const rateWidth = 5;          // Column width for rate
+const amtWidth = 5;           // Column width for amount
+const srWidth = 3;   
 
   const formattedItems = order.orderDetails
   .map((item, index) => {
-    // Counter for the item (1-based index)
-    const counter = (index + 1).toString().padEnd(3, ' '); // Right-align and ensure a fixed width for the counter (e.g., 3 digits)
+    const counter = (index + 1).toString().padEnd(srWidth-1, ' ');
 
-    
-    // Truncate item name if too long or pad with spaces if short
-    const itemName = item.itemname.length > maxItemNameLength
-      ? item.itemname.slice(0, maxItemNameLength)
-      : item.itemname.padEnd(maxItemNameLength, ' ');
+    // Split the item name into multiple lines if it exceeds maxItemNameLength
+    let itemNameLines = [];
+    for (let i = 0; i < item.itemname.length; i += maxItemNameLength) {
+      itemNameLines.push(item.itemname.slice(i, i + maxItemNameLength));
+    }
 
-    // Right-align quantity with proper spacing
-    const quantity = item.quantity.toString().padStart(4, ' ');
+    // Right-align quantity, rate, and amount
+    const quantity = item.quantity.toString().padStart(qtyWidth, ' ');
+    const rate = parseInt(item.price).toString().padStart(rateWidth, ' '); 
+    const amount = parseInt(item.quantity * item.price).toString().padStart(amtWidth, ' ');
 
-    // Right-align price with proper spacing
-    const price = `${item.price.toFixed(2)}`.padStart(8, ' ');
-
-    // Return the formatted line for the item with padding between columns, including the counter
-    return `|${counter}|${itemName}|${quantity}|${price}|`;
+    // Construct the formatted lines
+    return itemNameLines
+      .map((line, idx) => {
+        if (idx === 0) {
+          return `${counter} ${line.padEnd(maxItemNameLength, ' ')}${quantity} ${rate} ${amount}`;
+        } else {
+          return `   ${line.padEnd(maxItemNameLength, ' ')}    `; // Indented for wrapped lines
+        }
+      })
+      .join('\n');
   })
   .join('\n');
+
 
   const lineWidth = 20; // Adjust this based on your printer's maximum line width
 
@@ -113,16 +123,21 @@ const printReceipt2 = async (order) => {
       ];
   
       // Pad each line to the specified width
+      let pewpew = 0;
       return lines.map(line => {
-          const padding = ' '.repeat(width - line.length); // Calculate padding
+        if(width - line.length < 0){
+          pewpew = 0;
+        }else{
+          pewpew = width - line.length;
+        }
+          const padding = ' '.repeat(pewpew); // Calculate padding
           return line + padding; // Add padding to the right of the line
       }).join('\n'); // Join all lines with a newline
   }
   
   const formattedText = formatAndPadText(order, lineWidth);
     const name =
-`
-G.M.Autos
+`G.M.Autos
 Haji Wheel Alignment`;
 const address = 
 `
@@ -168,7 +183,7 @@ const formattedOutput = `${formattedInvoice}\n${formattedCustomerTime}`;
     const dabba = 
 `
 +----------------------------------------------+
-|Sr.|Item Name                   | QTY| Price  |
+Sr. Item Name                    QTY Rate   AMT 
 +----------------------------------------------+`;
 
 
@@ -216,7 +231,7 @@ Thanks For Shopping
       .align('lt') 
       .text(lineSeparator2)
       .align('lt')
-      .style('b')
+      .style('normal')
       .text(dabba)
       .text(formattedItems)
       .text("+----------------------------------------------+")
@@ -387,7 +402,7 @@ app.post('/place-order', async (req, res) => {
     // Optionally print receipt if required
     if (printReceipt) {
       // Call the new API or receipt logic
-      // const receiptResponse = await printReceipt2(order);
+       const receiptResponse = await printReceipt2(order);
     }
 
     res.status(201).json({ message: 'Order placed successfully!' });

@@ -49,8 +49,12 @@ const RetailPage = () => {
         const updatedItems = selectedItems.map(item => {
             if (item._id === itemId) {
                 const newValue = field === 'quantity' ? Math.max(1, value) : value;
-                return { ...item, [field]: newValue };
+                if(field == 'quantity' && newValue > item.stock) {
+                    alert('Quantity exceeds stock!');
+                    return { ...item, [field]: item.stock };
             }
+            return { ...item, [field]: newValue };
+        }
             return item;
         });
         setSelectedItems(updatedItems);

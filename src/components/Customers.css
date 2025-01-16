@@ -165,6 +165,7 @@ body {
 }
 
 .customers-table .cancel-btn {
+  margin-left: 5px;
   background-color: #cb2122;
   color: #fff;
 }
@@ -174,6 +175,8 @@ body {
 }
 
 .customers-table .delete {
+  margin-left: 5px;
+  margin-right: 5px;
   background-color: #cb2122;
   color: #fff;
 }

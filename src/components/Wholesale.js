@@ -63,8 +63,12 @@ const Wholesale = () => {
         const updatedItems = selectedItems.map(item => {
             if (item._id === itemId) {
                 const newValue = field === 'quantity' ? Math.max(1, value) : value;
-                return { ...item, [field]: newValue };
+                if(field == 'quantity' && newValue > item.stock) {
+                    alert('Quantity exceeds stock!');
+                    return { ...item, [field]: item.stock };
             }
+            return { ...item, [field]: newValue };
+        }
             return item;
         });
         setSelectedItems(updatedItems);
@@ -285,7 +289,7 @@ const Wholesale = () => {
                 <p>Total (after discount): Rs.{discountedTotal.toFixed(2)}</p>
                 <p>Total with Previous Balance included : Rs.{discountedTotal+customerBalance}</p>
                 <label>
-                    Amount To Pay :
+                    Amount To Pay : 
                 <input
                     type="number"
                     min="0"
