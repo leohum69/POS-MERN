@@ -11,6 +11,9 @@ const ItemsTable = () => {
     const [editedValues, setEditedValues] = useState({}); // Store edited values
     const [newItem, setNewItem] = useState({ name: '', price: '', size: '', model: '', code: '', retail: '', stock: '' }); // For adding a new item
     const [showAddForm, setShowAddForm] = useState(false); // To toggle add item form
+    const [filterMode, setFilterMode] = useState("all");  // "all" or "lowStock"
+    const [threshold, setThreshold] = useState(20);
+
 
     useEffect(() => {
         fetchItems();
@@ -35,6 +38,28 @@ const ItemsTable = () => {
             .catch(error => {
                 console.error('Error fetching data:', error);
             });
+    };
+    const updateFilteredItems = () => {
+        if (filterMode === "lowStock") {
+            setFilteredItems(items.filter(item => Number(item.stock) < threshold));
+        } else {
+            setFilteredItems(items);
+        }
+    };
+    const handleFilterChange = (mode) => {
+        setFilterMode(mode);
+        if (mode === "lowStock") {
+            setFilteredItems(items.filter(item => Number(item.stock) < threshold));
+        } else {
+            setFilteredItems(items);
+        }
+    };
+    const handleThresholdChange = (e) => {
+        const value = Number(e.target.value);
+        setThreshold(value);
+        if (filterMode === "lowStock") {
+            setFilteredItems(items.filter(item => Number(item.stock) < value));
+        }
     };
 
     const handleDelete = (id) => {
@@ -177,6 +202,35 @@ const ItemsTable = () => {
                     <button className="add-item" onClick={handleAddItem}>Add Item</button>
                 </div>
             )}
+
+            <div className="filter-options">
+                <label>
+                    <input
+                        type="radio"
+                        name="filter"
+                        value="all"
+                        checked={filterMode === "all"}
+                        onChange={() => handleFilterChange("all")}
+                    />
+                    Show All Items
+                </label>
+                <label>
+                    <input
+                        type="radio"
+                        name="filter"
+                        value="lowStock"
+                        checked={filterMode === "lowStock"}
+                        onChange={() => handleFilterChange("lowStock")}
+                    />
+                    Show Low Stock Items (Threshold: 
+                    <input
+                        type="number"
+                        value={threshold}
+                        onChange={handleThresholdChange}
+                        style={{ width: "50px", marginLeft: "5px" }}
+                    />)
+                </label>
+            </div>
 
             {/* Table to display items */}
             <table className="items-table-content">

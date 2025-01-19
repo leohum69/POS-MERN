@@ -6,6 +6,7 @@ const cors = require('cors');
 var converter = require('number-to-words');
 const fs = require('fs');
 const { exec } = require('child_process');
+const Fuse = require('fuse.js');
 
 //  const escpos = require('escpos');
 //  const USB = require('escpos-usb');
@@ -615,18 +616,40 @@ app.delete('/items/:id', async (req, res) => {
   }
 });
 
+// app.get('/items/search', (req, res) => {
+//   const { name } = req.query;
+//   if (!name) {
+//       return res.status(400).json({ error: 'Search term is required' });
+//   }
+
+//   // Perform case-insensitive search (modify for database usage)
+//   const regex = new RegExp(name, 'i');
+//   const filteredItems = items.filter(item => regex.test(item.name));
+
+//   res.json(filteredItems);
+// });
 app.get('/items/search', (req, res) => {
   const { name } = req.query;
   if (!name) {
       return res.status(400).json({ error: 'Search term is required' });
   }
 
-  // Perform case-insensitive search (modify for database usage)
-  const regex = new RegExp(name, 'i');
-  const filteredItems = items.filter(item => regex.test(item.name));
+  // Fuse.js options for fuzzy searching
+  const fuseOptions = {
+      keys: ['name'], // Search within the 'name' field
+      threshold: 0.3, // Adjust similarity threshold (lower means stricter matching)
+      includeScore: true // Includes match score in the response
+  };
+
+  const fuse = new Fuse(items, fuseOptions);
+  const result = fuse.search(name);
+
+  // Extract matched items from Fuse.js result
+  const filteredItems = result.map(item => item.item);
 
   res.json(filteredItems);
 });
+
 
 
 app.post('/customers', async (req, res) => {
