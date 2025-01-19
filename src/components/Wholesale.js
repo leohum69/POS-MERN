@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from './navbar';
 import './retail.css';
 // import { set } from 'mongoose';
 
 const Wholesale = () => {
+
+    const location = useLocation();
+    const [order, setOrder] = useState(location.state?.order || null);
     const [searchTerm, setSearchTerm] = useState('');
     const [suggestions, setSuggestions] = useState([]);
     const [selectedItems, setSelectedItems] = useState([]);
@@ -76,7 +80,7 @@ const Wholesale = () => {
     };
 
     // Calculate total value and discount
-    const calculateTotal = (items) => {
+    const calculateTotal = async (items) => {
         const total = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
         setTotalValue(total);
     };
@@ -85,6 +89,65 @@ const Wholesale = () => {
         setPayed(payedValue);
         // setRemainingBalance(discountedTotal - payedValue);
     };
+
+    const setOrderDetails = async (order) => {
+            // Fetch items from the API
+            try {
+                const response = await axios.get('http://localhost:8080/items');
+                const items = response.data;  // Assuming the API response contains an array of items
+                const updatedItems = order.orderDetails.map(orderItem => {
+                    // Find the real item data by matching _id
+                    const realItem = items.find(item => item._id === orderItem.itemid);
+        
+                    if (realItem) {
+                        return {
+                            ...realItem,  // Get all real item data
+                            quantity: orderItem.quantity || 1,
+                            price: orderItem.price || realItem.price || 0,  // Default to retail price if no price in order
+                        };
+                    }
+        
+                    // If real item is not found, return a default object with just the basic details
+                    return {
+                        _id: orderItem.itemid,
+                        itemname: orderItem.itemname,
+                        quantity: orderItem.quantity || 1,
+                        price: orderItem.price || 0,
+                    };
+                });
+        
+                setSelectedItems(updatedItems);
+                calculateTotal(updatedItems);
+            } catch (error) {
+                console.error('Error fetching items:', error);
+            }
+        };
+
+        const setCustomerdetails = async (order) => {
+            try {
+                const response = await axios.get('http://localhost:8080/customers');
+                const customers = response.data;  // Assuming the API response contains an array of customers
+                const selectedCustomer = customers.find(customer => 
+                    customer.name == order.customerName 
+                );
+                setCustomerId(selectedCustomer?._id || '');
+                setCustomerName(selectedCustomer?.name || '');
+                setCustomerPhone(selectedCustomer?.phone || '');
+                // setCustomerBalance(selectedCustomer?.balance || '');
+            } catch (error) {
+                console.error('Error fetching customers:', error);
+            }
+        };
+
+
+    useEffect(() => {
+            if (order) {
+                setCustomerdetails(order);
+                setDiscountPercentage(order.discountPercentage);
+                setOrderDetails(order);
+                setCustomerBalance(order.opening);
+            }
+        }, [order]);
 
     useEffect(() => {
         const discount = (discountPercentage / 100) * totalValue;
@@ -115,6 +178,9 @@ const Wholesale = () => {
         const discountAmount = totalPriceBeforeDiscount * (discountPercentage / 100);
         const totalPriceAfterDiscount = totalPriceBeforeDiscount - discountAmount;
         const remainingBalance = totalPriceAfterDiscount + customerBalance - payed;
+        // console.log(customerBalance);
+        // console.log(payed);
+        // console.log(remainingBalance);
         let ordernum = -1;
 
         try {
@@ -133,6 +199,7 @@ const Wholesale = () => {
             return;
         }
 
+
         const payload = {
             customerName,
             customerPhone,
@@ -144,37 +211,69 @@ const Wholesale = () => {
             totalPriceAfterDiscount,
             printReceipt,
             ordernum,
-            opening: payed,
+            opening: customerBalance,
             closing: remainingBalance,
         };
 
-        try {
-            const response = await axios.post('http://localhost:8080/place-order', payload);
+        if(order){
+            try {
+                await axios.put(`http://localhost:8080/orders/${order.orderNum}`, payload);
+                const customerUpdatePayload = { balance: remainingBalance };
+                await axios.put(`http://localhost:8080/customers/${customerId}`, customerUpdatePayload);
 
-            const customerUpdatePayload = { balance: remainingBalance };
-            await axios.put(`http://localhost:8080/customers/${customerId}`, customerUpdatePayload);
+                setMessage('Order updated successfully!');
 
-            setMessage(response.data.message || 'Order placed successfully!');
-            setSelectedItems([]);
-            setCustomerName('');
-            setCustomerPhone('');
-            setTotalValue(0);
-            setDiscountPercentage(0);
-            setDiscountAmount(0);
-            setDiscountedTotal(0);
-            setPayed(0);
-            setCustomerId('');
-            setCustomerBalance('');
-            setCustomerName('');
-
-            axios.get('http://localhost:8080/customers') 
-            .then(response => setCustomers(response.data))
-            .catch(error => console.error('Error fetching customers:', error));
-
-        } catch (error) {
-            console.error('Error placing the order:', error);
-            setMessage('Error placing the order.');
+                setSelectedItems([]);
+                setCustomerName('');
+                setCustomerPhone('');
+                setTotalValue(0);
+                setDiscountPercentage(0);
+                setDiscountAmount(0);
+                setDiscountedTotal(0);
+                setPayed(0);
+                setCustomerId('');
+                setCustomerBalance('');
+                setCustomerName('');
+    
+                axios.get('http://localhost:8080/customers') 
+                .then(response => setCustomers(response.data))
+                .catch(error => console.error('Error fetching customers:', error));
+                
+            } catch (error) {
+                console.error('Error updating the order:', error);
+                setMessage('Error updating the order.');
+            }
         }
+        else{
+            try {
+                const response = await axios.post('http://localhost:8080/place-order', payload);
+    
+                const customerUpdatePayload = { balance: remainingBalance };
+                await axios.put(`http://localhost:8080/customers/${customerId}`, customerUpdatePayload);
+    
+                setMessage(response.data.message || 'Order placed successfully!');
+                setSelectedItems([]);
+                setCustomerName('');
+                setCustomerPhone('');
+                setTotalValue(0);
+                setDiscountPercentage(0);
+                setDiscountAmount(0);
+                setDiscountedTotal(0);
+                setPayed(0);
+                setCustomerId('');
+                setCustomerBalance('');
+                setCustomerName('');
+    
+                axios.get('http://localhost:8080/customers') 
+                .then(response => setCustomers(response.data))
+                .catch(error => console.error('Error fetching customers:', error));
+    
+            } catch (error) {
+                console.error('Error placing the order:', error);
+                setMessage('Error placing the order.');
+            }
+        }
+        
     };
 
     return (
@@ -211,14 +310,27 @@ const Wholesale = () => {
 
             {/* Suggestions dropdown */}
             {suggestions.length > 0 && (
-                <ul className="suggestions-list">
+            <table className="suggestions-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Model</th>
+                        <th>Retail Price (Rs.)</th>
+                        <th>Stock</th>
+                    </tr>
+                </thead>
+                <tbody>
                     {suggestions.map(item => (
-                        <li key={item._id} onClick={() => handleItemSelection(item)}>
-                            {item.name} - {item.model} - Rs.{item.price}
-                        </li>
+                        <tr key={item._id} onClick={() => handleItemSelection(item)}>
+                            <td>{item.name}</td>
+                            <td>{item.model}</td>
+                            <td>Rs.{item.price}</td>
+                            <td>{item.stock}</td>
+                        </tr>
                     ))}
-                </ul>
-            )}
+                </tbody>
+            </table>
+        )}
 
             {/* Selected items */}
             <h3>Selected Items</h3>

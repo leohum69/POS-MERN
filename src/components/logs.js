@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate  } from 'react-router-dom';
 import Navbar from './navbar';
 import axios from 'axios';
 import './logs.css';
 
 const Logs = () => {
+    const navigate  = useNavigate();
     const [orders, setOrders] = useState([]);
     const [filteredOrders, setFilteredOrders] = useState([]);
     const [filter, setFilter] = useState('all'); // Options: 'all', 'retail', 'wholesale'
@@ -27,6 +29,24 @@ const Logs = () => {
         setSelectedDate(date);
         filterOrders(filter, date);
     };
+
+    const handleEdit = (orderNum) => {
+        const orderToEdit = orders.find(order => order.orderNum === orderNum);
+        // console.log(orderToEdit);
+        if (orderToEdit) {
+            if(orderToEdit.orderType === 'wholesale'){
+                navigate('/wholesale', {
+                    state: { order: orderToEdit }  // Pass the whole order object
+                });
+            }
+            else{
+                navigate('/retailpage', {
+                    state: { order: orderToEdit }  // Pass the whole order object
+                });
+            }
+            
+        }
+    };
     const handleDelete = (orderNum) => {
         if (window.confirm('Are you sure you want to delete this order?')) {
             axios.delete(`http://localhost:8080/orders/${orderNum}`)
@@ -43,7 +63,23 @@ const Logs = () => {
                 });
         }
     };
-    
+
+    const handleprintinv = async (orderNum) => {
+        if (window.confirm('Are you sure you want to print this order?')) {
+            await axios.post(`http://localhost:8080/print/orders/${orderNum}`)
+                .then(() => {
+                    // Update state after successful deletion
+                    
+                    alert('Order Printed successfully!');
+                })
+                .catch(error => {
+                    console.error('Error Printing the order:', error);
+                    alert('Failed to Print the order. Please try again.');
+                });
+        }
+    };
+
+
 
     const filterOrders = (type, date) => {
         let filtered = orders;
@@ -162,6 +198,19 @@ const Logs = () => {
                                     >
                                     Delete
                                     </button>
+                                    <button 
+                                        className="delete-btn" 
+                                        onClick={() => handleprintinv(order.orderNum)}
+                                    >
+                                    Print Invoice
+                                    </button>
+                                    <button 
+                                        className="delete-btn" 
+                                        onClick={() => handleEdit(order.orderNum)}
+                                    >
+                                    Edit
+                                    </button>
+
                                 </tr>
                             ))}
                         </tbody>

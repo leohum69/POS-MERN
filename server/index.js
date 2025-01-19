@@ -7,10 +7,10 @@ var converter = require('number-to-words');
 const fs = require('fs');
 const { exec } = require('child_process');
 
- const escpos = require('escpos');
- const USB = require('escpos-usb');
- const device = new USB(); // Automatically selects first connected USB printer
- const printer = new escpos.Printer(device);
+//  const escpos = require('escpos');
+//  const USB = require('escpos-usb');
+//  const device = new USB(); // Automatically selects first connected USB printer
+//  const printer = new escpos.Printer(device);
 
 
 const app = express();
@@ -44,6 +44,7 @@ const orderSchema = new mongoose.Schema({
   orderType: String, // 'retail' or 'wholesale'
   orderDetails: [
     {
+      itemid : String, // ID of the item
       itemname: String, // Name of the item
       quantity: Number, // Quantity of the item
       price: Number, // Price per unit
@@ -402,7 +403,7 @@ app.post('/place-order', async (req, res) => {
     // Optionally print receipt if required
     if (printReceipt) {
       // Call the new API or receipt logic
-       const receiptResponse = await printReceipt2(order);
+       //const receiptResponse = await printReceipt2(order);
     }
 
     res.status(201).json({ message: 'Order placed successfully!' });
@@ -411,6 +412,102 @@ app.post('/place-order', async (req, res) => {
     res.status(500).json({ message: 'Server error while placing the order.' });
   }
 });
+
+app.put('/orders/:orderNum', async (req, res) => {
+  const { orderNum } = req.params; // Extract order number from the URL
+  const {
+    customerName,
+    customerPhone,
+    orderType,
+    orderDetails,
+    totalPriceBeforeDiscount,
+    discountPercentage,
+    discountAmount,
+    totalPriceAfterDiscount,
+    printReceipt,
+    opening,
+    closing
+  } = req.body;
+
+  // Validate orderDetails
+  if (!orderDetails || !Array.isArray(orderDetails) || orderDetails.length === 0) {
+    return res.status(400).json({ message: 'Order details are required and must be a non-empty array.' });
+  }
+
+  // Ensure all order details are valid
+  const isValidDetails = orderDetails.every(
+    (item) => item.itemid && item.quantity > 0 && item.price >= 0
+  );
+
+  if (!isValidDetails) {
+    return res.status(400).json({ message: 'Invalid order details.' });
+  }
+
+  try {
+    // Find the order by orderNum
+    const existingOrder = await Order.findOne({ orderNum });
+
+    if (!existingOrder) {
+      return res.status(404).json({ message: `Order with orderNum ${orderNum} not found.` });
+    }
+
+    // Iterate over the orderDetails to compare quantities and validate stock
+    for (let newItem of orderDetails) {
+      const existingItem = existingOrder.orderDetails.find(item => item.itemid === newItem.itemid);
+      
+      if (existingItem) {
+        // Check if the quantity has changed
+        const quantityChanged = existingItem.quantity !== newItem.quantity;
+
+        if (quantityChanged) {
+          const product = await Item.findById(newItem.itemid); // Fetch item by ObjectId
+
+          if (!product) {
+            return res.status(400).json({ message: `Product with ID ${newItem.itemid} not found.` });
+          }
+
+          // Check if sufficient stock is available
+          if (product.stock < newItem.quantity) {
+            return res.status(400).json({ message: `Insufficient stock for ${product.name}-${product.model}.` });
+          }
+
+          // Update the stock if valid
+          product.stock -= (newItem.quantity - existingItem.quantity); // Adjust stock based on the difference in quantities
+          await product.save();
+        }
+      }
+    }
+
+    // Update the order details in the database
+    existingOrder.customerName = customerName || existingOrder.customerName;
+    existingOrder.customerPhone = customerPhone || existingOrder.customerPhone;
+    existingOrder.orderType = orderType || existingOrder.orderType;
+    existingOrder.orderDetails = orderDetails;
+    existingOrder.totalPriceBeforeDiscount = totalPriceBeforeDiscount || existingOrder.totalPriceBeforeDiscount;
+    existingOrder.discountPercentage = discountPercentage || existingOrder.discountPercentage;
+    existingOrder.discountAmount = discountAmount || existingOrder.discountAmount;
+    existingOrder.totalPriceAfterDiscount = totalPriceAfterDiscount || existingOrder.totalPriceAfterDiscount;
+    existingOrder.opening = opening;
+    existingOrder.closing = closing;
+
+    // console.log(existingOrder);
+
+    // Save the updated order
+    await existingOrder.save();
+
+    // Optionally print receipt if required
+    if (printReceipt) {
+      // Call the print receipt logic
+      //const receiptResponse = await printReceipt2(existingOrder);
+    }
+
+    res.status(200).json({ message: 'Order updated successfully!' });
+  } catch (error) {
+    console.error('Error updating order:', error);
+    res.status(500).json({ message: 'Server error while updating the order.' });
+  }
+});
+
 
 
  
@@ -439,6 +536,27 @@ app.delete('/orders/:orderNum', async (req, res) => {
   } catch (error) {
     console.error('Error deleting order:', error);
     res.status(500).json({ message: 'Server error while deleting order.' });
+  }
+});
+
+app.post('/print/orders/:orderNum', async (req, res) => {
+  try {
+    const { orderNum } = req.params;
+
+    // Find the order in the database
+    const order = await Order.findOne({ orderNum: orderNum });
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found.' });
+    }
+
+    // Call the function to print the order
+    //await printReceipt2(order);
+
+    res.status(200).json({ message: 'Order printed successfully.' });
+  } catch (error) {
+    console.error('Error printing order:', error);
+    res.status(500).json({ message: 'Server error while printing order.' });
   }
 });
 
